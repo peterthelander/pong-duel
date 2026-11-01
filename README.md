@@ -1,7 +1,8 @@
 # Pong Duel
 
 A small portrait-mode Pong game for phones, built with Expo SDK 57, React Native,
-and JavaScript. The local project folder and Expo slug are still named `demo-app`.
+and JavaScript. The repository and local folder are named `pong-duel`; the internal
+Expo slug and package name retain the original `demo-app` identifier.
 
 ## Play
 
