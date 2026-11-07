@@ -1,11 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
 import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 const PADDLE_WIDTH = 96;
 const PADDLE_HEIGHT = 14;
-const PADDLE_MARGIN = 82;
+const PADDLE_MARGIN = 126;
 const BALL_SIZE = 18;
 const BASE_BALL_SPEED = 360;
 const MAX_BALL_SPEED = 850;
@@ -48,10 +48,11 @@ export default function App() {
   const [topScore, setTopScore] = useState(0);
   const [bottomScore, setBottomScore] = useState(0);
   const [matchWinner, setMatchWinner] = useState(null);
+  const [started, setStarted] = useState(false);
 
   const replaySound = (player) => {
     try {
-      void player.seekTo(0);
+      void player.seekTo(0).catch(() => {});
       player.play();
     } catch {
       // Ignore transient playback issues to keep gameplay smooth.
@@ -107,7 +108,7 @@ export default function App() {
     void setAudioModeAsync({
       playsInSilentMode: true,
       interruptionMode: 'mixWithOthers',
-    });
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -131,7 +132,7 @@ export default function App() {
       const dt = Math.min((now - lastFrameTimeRef.current) / 1000, 0.033);
       lastFrameTimeRef.current = now;
 
-      if (matchWinner) {
+      if (!started || matchWinner) {
         animationRef.current = requestAnimationFrame(step);
         return;
       }
@@ -261,7 +262,7 @@ export default function App() {
       }
       lastFrameTimeRef.current = 0;
     };
-  }, [arena.height, arena.width, ballPosition, matchWinner]);
+  }, [arena.height, arena.width, ballPosition, matchWinner, started]);
 
   const netSegments = Array.from({ length: 12 }, (_, i) => i);
   const ballSpeed = Math.hypot(ballRef.current.vx, ballRef.current.vy);
@@ -327,8 +328,27 @@ export default function App() {
         onResponderMove={(event) => updateBottomPaddle(event.nativeEvent.locationX)}
       />
 
+      {!started ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Start Pong Duel"
+          style={styles.overlay}
+          onPress={() => {
+            // The first tap permits sound playback in mobile browsers.
+            replaySound(paddleSoundPlayer);
+            restartMatch();
+            setStarted(true);
+          }}
+        >
+          <Text style={styles.overlayTitle}>Pong Duel</Text>
+          <Text style={styles.overlaySub}>Drag below to move your paddle</Text>
+          <Text style={styles.overlaySub}>First to seven wins</Text>
+          <Text style={styles.startButton}>Tap to play</Text>
+        </Pressable>
+      ) : null}
+
       {matchWinner ? (
-        <Pressable style={styles.overlay} onPress={restartMatch}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Play again" style={styles.overlay} onPress={restartMatch}>
           <Text style={styles.overlayTitle}>{matchWinner === 'You' ? 'You Win' : 'AI Wins'}</Text>
           <Text style={styles.overlaySub}>Tap to play again</Text>
         </Pressable>
@@ -344,6 +364,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#071524',
     overflow: 'hidden',
+    ...Platform.select({ web: { width: '100%', maxWidth: 520, alignSelf: 'center' } }),
   },
   bgOrbLeft: {
     position: 'absolute',
@@ -468,7 +489,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(2, 6, 23, 0.74)',
@@ -478,6 +503,16 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: '900',
     letterSpacing: 0.8,
+  },
+  startButton: {
+    marginTop: 28,
+    paddingHorizontal: 30,
+    paddingVertical: 16,
+    borderRadius: 28,
+    backgroundColor: '#67e8f9',
+    color: '#071524',
+    fontSize: 20,
+    fontWeight: '800',
   },
   overlaySub: {
     marginTop: 10,

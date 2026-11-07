@@ -1,0 +1,4 @@
+html, body, #root { height: 100%; margin: 0; background: #030b14; }
+body { overflow: hidden; overscroll-behavior: none; touch-action: none; }
+#root { min-height: 100dvh; flex-direction: column; }
+* { -webkit-tap-highlight-color: transparent; }
