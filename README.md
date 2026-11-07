@@ -10,8 +10,8 @@ Expo slug and package name retain the original `demo-app` identifier.
 
 Open the link in Safari or Chrome, tap **Tap to play**, and drag in the lower part
 of the screen. No Expo Go, Tailscale, shared Wi-Fi, or running computer is needed.
-The hosted version is private to the owner's ChatGPT account, so you may be asked
-to sign in. Use your phone's browser if GitHub's in-app browser has trouble opening it.
+The hosted game is public: anyone can play without signing in to ChatGPT.
+Use your phone's browser if GitHub's in-app browser has trouble opening it.
 
 ## Controls
 
