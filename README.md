@@ -8,21 +8,36 @@ Expo slug and package name retain the original `demo-app` identifier.
 
 [**Play Pong Duel in your browser**](https://pong-duel-peter.peter-thelander.chatgpt.site)
 
-Open the link in Safari or Chrome, tap **Tap to play**, and drag in the lower part
+Open the link in Safari or Chrome, tap **Play**, and drag in the lower part
 of the screen. No Expo Go, Tailscale, shared Wi-Fi, or running computer is needed.
 The hosted game is public: anyone can play without signing in to ChatGPT.
 Use your phone's browser if GitHub's in-app browser has trouble opening it.
 
 ## Controls
 
-- Drag or tap in the lower part of the screen to move your paddle.
+- Drag or tap in the lower half of the screen to move your paddle horizontally
+  and vertically.
 - Play against an AI-controlled upper paddle.
 - The first player to score seven points wins. Tap the result screen to restart.
 - Wall hits, paddle hits, and goals have bundled sound effects.
+- Use the arrows on the home screen to choose an illustrated AI opponent.
+  Higher opponent levels make the AI faster.
+- Use **Settings** to turn sound effects on or off and choose Classic, Retro, or
+  Soft sounds; use **Characters** to choose a paddle color.
+- Use **Background** to change the arena design. Use **Profile** to edit your
+  name and see your level and progress. New players start at level 1; existing
+  saved levels are retained. Winning earns two progress points per 100 opponent
+  levels. Each five points raises your level by two, up to level 1000; remaining
+  points carry over. Losses and abandoned matches earn no points. A higher player
+  level also makes the AI faster.
+- Tap **Home** during or after a match to end it and return to the home screen.
+  The next match starts fresh.
 
-Scores and match state live in memory and reset when the app restarts. The game
-has no backend, account system, or API keys; gameplay code makes no network requests.
-The hosted browser version needs an internet connection to load its files.
+Scores and match state reset when the app restarts. Preferences and the optional
+profile name and level are saved unencrypted on the device; they are not sent to
+a server. Profile photos are not supported yet. The game has no backend, account
+system, or API keys. The hosted browser version needs an internet connection to
+load the app and sound files.
 
 ## Develop locally with Expo Go
 
@@ -46,7 +61,8 @@ The CLI may prompt to install tunnel support. Keep the development server runnin
 while playing. See [Expo's device setup guide](https://docs.expo.dev/get-started/start-developing/).
 
 `npm run android` and `npm run ios` open supported emulator/simulator setups.
-For browser development, run `npm run web`. To create a hosted build:
+For browser development, run `npm run web`. Run `npm test` for the game-rules
+tests. To create a hosted build:
 
 ```bash
 npm run build:web
@@ -55,18 +71,25 @@ npm run build:web
 This writes static HTML, JavaScript, and bundled sound assets to `dist/`.
 Sites hosting is configured in `.openai/hosting.json`. Updating GitHub alone does
 not update the hosted game; export and publish a new Sites version as well.
+The export contains static HTML for each route. Host it with extensionless route
+support so browser refreshes and direct links work. For local testing, use
+`npx expo serve` after exporting.
 
 The browser version preloads sound effects into Web Audio buffers before play;
 native builds use Expo Audio.
 
 ## Project layout
 
-- `App.js`: game loop, touch controls, scoring, audio, and presentation.
+- `src/app/`: Expo Router screens and layout.
+- `App.js`: game loop, touch controls, scoring, and game presentation.
+- `gameSettings.js`, `gameOptions.js`, and `menuStyles.js`: saved preferences and menu presentation.
+- `OpponentAvatar.js`: illustrated opponent portraits.
 - `useGameSounds.web.js`, `useGameSounds.native.js`, and `webAudio.js`: sound playback.
 - `assets/sounds/`: bundled wall, paddle, and goal effects.
+- `scripts/generate-sounds.mjs`: generates the original Retro and Soft effects.
 - `app.json`: Expo configuration and icons.
-- `index.js`: native app registration.
-- `index.web.js` and `web.css`: browser registration and touch/viewport styles.
+- `index.js`: native router entry point.
+- `index.web.js` and `web.css`: browser router entry and touch/viewport styles.
 
 ## Current status
 
@@ -74,7 +97,7 @@ The web export was checked in Chromium with a 390 × 844 touch viewport: start,
 paddle dragging, match completion, and restart. A local production build with
 buffered sound was also tested on an iPhone; further device testing is welcome.
 
-`npx expo lint` currently reports existing game-loop React hook/ref issues.
+`npx eslint App.js` currently reports existing game-loop React hook/ref issues.
 An ad hoc JavaScript type check also reports missing React/WAV/CSS declarations
 and `Animated.View` typing issues. These checks are not yet clean; the production
 web export is the build check. Native Expo Go gameplay was not verified in this change.

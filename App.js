@@ -1,7 +1,10 @@
-import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState } from 'react';
+import { router } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useGameSounds } from './useGameSounds';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useGameSettings } from './gameSettings';
+import { BACKGROUNDS, calculateAiSpeed, OPPONENTS } from './gameOptions';
+import { paddleCrossingX, serveBallY } from './gamePhysics';
 
 const PADDLE_WIDTH = 96;
 const PADDLE_HEIGHT = 14;
@@ -9,7 +12,6 @@ const PADDLE_MARGIN = 126;
 const BALL_SIZE = 18;
 const BASE_BALL_SPEED = 360;
 const MAX_BALL_SPEED = 850;
-const AI_MAX_SPEED = 420;
 const WIN_SCORE = 7;
 const SERVE_DELAY_MS = 480;
 
@@ -26,10 +28,21 @@ export default function App() {
   const animationRef = useRef(null);
   const lastFrameTimeRef = useRef(0);
   const rallyPausedUntilRef = useRef(0);
-  const { audioStatus, startAudio, playSound } = useGameSounds();
+  const servePendingRef = useRef(false);
+  const { audioStatus, soundEnabled, soundStyle, paddleColor, opponent, background, playerName, playerLevel, awardWin, setEnteredGame, playSound: playAudio } = useGameSettings();
+  const opponentData = OPPONENTS.find((item) => item.name === opponent);
+  const theme = BACKGROUNDS.find((item) => item.name === background);
+  const insets = useSafeAreaInsets();
+  const playSound = useCallback((sound) => {
+    if (soundEnabled) {
+      playAudio(sound, soundStyle);
+    }
+  }, [soundEnabled, soundStyle, playAudio]);
 
   const topPaddleXRef = useRef(0);
   const bottomPaddleXRef = useRef(0);
+  const bottomPaddleYRef = useRef(0);
+  const winAwardedRef = useRef(false);
   const topScoreRef = useRef(0);
   const bottomScoreRef = useRef(0);
   const trailRef = useRef(
@@ -43,17 +56,20 @@ export default function App() {
   const [arena, setArena] = useState({ width: 0, height: 0 });
   const [topPaddleX, setTopPaddleX] = useState(0);
   const [bottomPaddleX, setBottomPaddleX] = useState(0);
+  const [bottomPaddleY, setBottomPaddleY] = useState(0);
   const [topScore, setTopScore] = useState(0);
   const [bottomScore, setBottomScore] = useState(0);
   const [matchWinner, setMatchWinner] = useState(null);
-  const [started, setStarted] = useState(false);
-  const updateBottomPaddle = (touchX) => {
-    if (arena.width <= 0) {
+  const updateBottomPaddle = (touchX, touchY) => {
+    if (arena.width <= 0 || arena.height <= 0) {
       return;
     }
-    const next = clamp(touchX - PADDLE_WIDTH / 2, 0, arena.width - PADDLE_WIDTH);
-    bottomPaddleXRef.current = next;
-    setBottomPaddleX(next);
+    const nextX = clamp(touchX - PADDLE_WIDTH / 2, 0, arena.width - PADDLE_WIDTH);
+    const nextY = clamp(arena.height / 2 + touchY - PADDLE_HEIGHT / 2, arena.height / 2, arena.height - PADDLE_HEIGHT);
+    bottomPaddleXRef.current = nextX;
+    bottomPaddleYRef.current = nextY;
+    setBottomPaddleX(nextX);
+    setBottomPaddleY(nextY);
   };
 
   const resetBall = (directionY, delayMs = 0) => {
@@ -65,6 +81,7 @@ export default function App() {
     ballRef.current = { x: centerX, y: centerY, vx: initialVX, vy: initialVY };
     trailRef.current = trailRef.current.map(() => ({ x: centerX, y: centerY }));
     rallyPausedUntilRef.current = performance.now() + delayMs;
+    servePendingRef.current = true;
     ballPosition.setValue({ x: centerX, y: centerY });
   };
 
@@ -74,6 +91,7 @@ export default function App() {
     setTopScore(0);
     setBottomScore(0);
     setMatchWinner(null);
+    winAwardedRef.current = false;
     lastFrameTimeRef.current = 0;
     resetBall(randomServeDirection(), SERVE_DELAY_MS);
   };
@@ -87,8 +105,10 @@ export default function App() {
     const initialBottom = (arena.width - PADDLE_WIDTH) / 2;
     topPaddleXRef.current = initialTop;
     bottomPaddleXRef.current = initialBottom;
+    bottomPaddleYRef.current = clamp(arena.height - PADDLE_MARGIN - PADDLE_HEIGHT, arena.height / 2, arena.height - PADDLE_HEIGHT);
     setTopPaddleX(initialTop);
     setBottomPaddleX(initialBottom);
+    setBottomPaddleY(bottomPaddleYRef.current);
     resetBall(randomServeDirection(), SERVE_DELAY_MS);
   }, [arena.height, arena.width]);
 
@@ -103,7 +123,6 @@ export default function App() {
     }
 
     const topPaddleY = PADDLE_MARGIN;
-    const bottomPaddleY = arena.height - PADDLE_MARGIN - PADDLE_HEIGHT;
 
     const step = (now) => {
       if (lastFrameTimeRef.current === 0) {
@@ -113,7 +132,7 @@ export default function App() {
       const dt = Math.min((now - lastFrameTimeRef.current) / 1000, 0.033);
       lastFrameTimeRef.current = now;
 
-      if (!started || matchWinner) {
+      if (matchWinner) {
         animationRef.current = requestAnimationFrame(step);
         return;
       }
@@ -121,8 +140,7 @@ export default function App() {
       // AI paddle tracks the ball with a capped movement speed.
       const ball = ballRef.current;
       const scoreDiff = bottomScoreRef.current - topScoreRef.current;
-      const aiSkillBoost = clamp(scoreDiff * 22, -60, 140);
-      const aiSpeed = clamp(AI_MAX_SPEED + aiSkillBoost, 320, 560);
+      const aiSpeed = calculateAiSpeed(opponentData.level, playerLevel, scoreDiff);
       const lookAhead = ball.vy < 0 ? 0.22 : 0.08;
       const aiJitter = Math.sin(now / 180) * (ball.vy < 0 ? 9 : 4);
       const aiTargetX = clamp(
@@ -140,6 +158,18 @@ export default function App() {
         return;
       }
 
+      if (servePendingRef.current) {
+        servePendingRef.current = false;
+        if (ball.vy > 0) {
+          ball.y = serveBallY(
+            ball.x, ball.y, BALL_SIZE, bottomPaddleXRef.current,
+            bottomPaddleYRef.current, PADDLE_WIDTH, PADDLE_HEIGHT
+          );
+        }
+      }
+
+      const previousBallX = ball.x;
+      const previousBallY = ball.y;
       ball.x += ball.vx * dt;
       ball.y += ball.vy * dt;
 
@@ -176,16 +206,16 @@ export default function App() {
       }
 
       // Bottom paddle collision.
-      const overlapsBottomPaddleX =
-        ball.x + BALL_SIZE >= bottomPaddleXRef.current &&
-        ball.x <= bottomPaddleXRef.current + PADDLE_WIDTH;
-      const hitsBottomPaddleY =
-        ball.y + BALL_SIZE >= bottomPaddleY && ball.y <= bottomPaddleY + PADDLE_HEIGHT;
-      if (ball.vy > 0 && overlapsBottomPaddleX && hitsBottomPaddleY) {
-        ball.y = bottomPaddleY - BALL_SIZE;
+      const paddleY = bottomPaddleYRef.current;
+      const crossingX = paddleCrossingX(
+        previousBallX, previousBallY, ball.x, ball.y, BALL_SIZE,
+        bottomPaddleXRef.current, paddleY, PADDLE_WIDTH
+      );
+      if (ball.vy > 0 && crossingX !== null) {
+        ball.y = paddleY - BALL_SIZE;
         ball.vy = -Math.abs(ball.vy) * 1.03;
         const offset =
-          (ballCenterX - (bottomPaddleXRef.current + PADDLE_WIDTH / 2)) / (PADDLE_WIDTH / 2);
+          (crossingX + BALL_SIZE / 2 - (bottomPaddleXRef.current + PADDLE_WIDTH / 2)) / (PADDLE_WIDTH / 2);
         ball.vx += offset * 270;
         playSound('paddle');
       }
@@ -201,6 +231,10 @@ export default function App() {
         setBottomScore(nextBottomScore);
         playSound('point');
         if (nextBottomScore >= WIN_SCORE) {
+          if (!winAwardedRef.current) {
+            winAwardedRef.current = true;
+            awardWin(opponentData.level);
+          }
           setMatchWinner('You');
           resetBall(1);
           animationRef.current = requestAnimationFrame(step);
@@ -219,7 +253,7 @@ export default function App() {
         setTopScore(nextTopScore);
         playSound('point');
         if (nextTopScore >= WIN_SCORE) {
-          setMatchWinner('AI');
+          setMatchWinner(opponentData.name);
           resetBall(-1);
           animationRef.current = requestAnimationFrame(step);
           return;
@@ -243,7 +277,7 @@ export default function App() {
       }
       lastFrameTimeRef.current = 0;
     };
-  }, [arena.height, arena.width, ballPosition, matchWinner, playSound, started]);
+  }, [arena.height, arena.width, awardWin, ballPosition, matchWinner, opponentData.level, playerLevel, playSound]);
 
   const netSegments = Array.from({ length: 12 }, (_, i) => i);
   const ballSpeed = Math.hypot(ballRef.current.vx, ballRef.current.vy);
@@ -251,23 +285,23 @@ export default function App() {
 
   return (
     <View
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.color }]}
       onLayout={(event) => {
         const { width, height } = event.nativeEvent.layout;
         setArena({ width, height });
       }}
     >
-      <View style={styles.bgOrbLeft} />
-      <View style={styles.bgOrbRight} />
+      <View style={[styles.bgOrbLeft, { backgroundColor: theme.left }]} />
+      <View style={[styles.bgOrbRight, { backgroundColor: theme.right }]} />
 
       <Text style={styles.title}>Pong Duel</Text>
 
       <View style={styles.scoreboard}>
-        <Text style={styles.scoreLabel}>AI: {topScore}</Text>
-        <Text style={styles.scoreLabel}>You: {bottomScore}</Text>
+        <Text numberOfLines={1} style={styles.scoreLabel}>{opponentData.name}: {topScore}</Text>
+        <Text numberOfLines={1} style={styles.scoreLabel}>{playerName || 'You'}: {bottomScore}</Text>
       </View>
       <Text style={styles.goalLabel}>First to {WIN_SCORE}</Text>
-      {started && audioStatus === 'failed' ? (
+      {soundEnabled && audioStatus === 'failed' ? (
         <Text style={styles.audioWarning}>Sound unavailable</Text>
       ) : null}
 
@@ -302,45 +336,35 @@ export default function App() {
       />
 
       <View style={[styles.paddle, styles.aiPaddle, { top: PADDLE_MARGIN, left: topPaddleX }]} />
-      <View style={[styles.paddle, styles.playerPaddle, { bottom: PADDLE_MARGIN, left: bottomPaddleX }]} />
+      <View style={[styles.paddle, styles.playerPaddle, { top: bottomPaddleY, left: bottomPaddleX, backgroundColor: paddleColor, shadowColor: paddleColor }]} />
 
       <View
         style={styles.bottomTouchZone}
         onStartShouldSetResponder={() => true}
         onMoveShouldSetResponder={() => true}
-        onResponderGrant={(event) => updateBottomPaddle(event.nativeEvent.locationX)}
-        onResponderMove={(event) => updateBottomPaddle(event.nativeEvent.locationX)}
+        onResponderGrant={(event) => updateBottomPaddle(event.nativeEvent.locationX, event.nativeEvent.locationY)}
+        onResponderMove={(event) => updateBottomPaddle(event.nativeEvent.locationX, event.nativeEvent.locationY)}
       />
-
-      {!started ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Start Pong Duel"
-          style={styles.overlay}
-          disabled={audioStatus === 'loading'}
-          onPress={() => {
-            startAudio();
-            playSound('paddle');
-            restartMatch();
-            setStarted(true);
-          }}
-        >
-          <Text style={styles.overlayTitle}>Pong Duel</Text>
-          <Text style={styles.overlaySub}>Drag below to move your paddle</Text>
-          <Text style={styles.overlaySub}>First to seven wins</Text>
-          {audioStatus === 'failed' ? <Text style={styles.overlaySub}>Sound unavailable</Text> : null}
-          <Text style={styles.startButton}>{audioStatus === 'loading' ? 'Loading sounds...' : 'Tap to play'}</Text>
-        </Pressable>
-      ) : null}
 
       {matchWinner ? (
         <Pressable accessibilityRole="button" accessibilityLabel="Play again" style={styles.overlay} onPress={restartMatch}>
-          <Text style={styles.overlayTitle}>{matchWinner === 'You' ? 'You Win' : 'AI Wins'}</Text>
+          <Text style={styles.overlayTitle}>{matchWinner === 'You' ? 'You Win' : `${matchWinner} Wins`}</Text>
+          {matchWinner === 'You' ? <Text style={styles.overlaySub}>+{opponentData.level / 100 * 2} progress points</Text> : null}
           <Text style={styles.overlaySub}>Tap to play again</Text>
         </Pressable>
       ) : null}
 
-      <StatusBar style="light" />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Home"
+        style={[styles.homeButton, { top: Math.max(insets.top, 8) }]}
+        onPress={() => {
+          setEnteredGame(false);
+          router.replace('/');
+        }}
+      >
+        <Text style={styles.homeButtonText}>Home</Text>
+      </Pressable>
     </View>
   );
 }
@@ -384,7 +408,7 @@ const styles = StyleSheet.create({
   scoreboard: {
     position: 'absolute',
     top: 54,
-    left: 28,
+    left: 78,
     right: 28,
     paddingVertical: 8,
     borderRadius: 14,
@@ -398,6 +422,8 @@ const styles = StyleSheet.create({
     color: '#f8fafc',
     fontSize: 18,
     fontWeight: '700',
+    flex: 1,
+    textAlign: 'center',
   },
   goalLabel: {
     position: 'absolute',
@@ -457,6 +483,19 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     elevation: 3,
   },
+  homeButton: {
+    position: 'absolute',
+    left: 8,
+    minWidth: 62,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: '#10283b',
+    borderColor: '#334155',
+    borderWidth: 1,
+  },
+  homeButtonText: { color: '#67e8f9', fontSize: 14, fontWeight: '800' },
   ballTrail: {
     position: 'absolute',
     width: BALL_SIZE,
@@ -478,10 +517,10 @@ const styles = StyleSheet.create({
   },
   bottomTouchZone: {
     position: 'absolute',
-    bottom: 28,
+    bottom: 0,
     left: 0,
     right: 0,
-    height: '30%',
+    height: '50%',
     backgroundColor: 'transparent',
   },
   overlay: {
@@ -499,16 +538,6 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: '900',
     letterSpacing: 0.8,
-  },
-  startButton: {
-    marginTop: 28,
-    paddingHorizontal: 30,
-    paddingVertical: 16,
-    borderRadius: 28,
-    backgroundColor: '#67e8f9',
-    color: '#071524',
-    fontSize: 20,
-    fontWeight: '800',
   },
   overlaySub: {
     marginTop: 10,

@@ -2,6 +2,7 @@
   "expo": {
     "name": "Pong Duel",
     "slug": "demo-app",
+    "scheme": "pong-duel",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -18,10 +19,12 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "output": "static"
     },
     "plugins": [
-      "expo-audio"
+      "expo-audio",
+      "expo-router"
     ]
   }
 }

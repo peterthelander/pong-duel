@@ -1,9 +1,15 @@
 import { Asset } from 'expo-asset';
 
 const SOUND_ASSETS = {
-  wall: require('./assets/sounds/bounce.wav'),
-  paddle: require('./assets/sounds/click.wav'),
-  point: require('./assets/sounds/goal.wav'),
+  'Classic-wall': require('./assets/sounds/bounce.wav'),
+  'Classic-paddle': require('./assets/sounds/click.wav'),
+  'Classic-point': require('./assets/sounds/goal.wav'),
+  'Retro-wall': require('./assets/sounds/retro-wall.wav'),
+  'Retro-paddle': require('./assets/sounds/retro-paddle.wav'),
+  'Retro-point': require('./assets/sounds/retro-point.wav'),
+  'Soft-wall': require('./assets/sounds/soft-wall.wav'),
+  'Soft-paddle': require('./assets/sounds/soft-paddle.wav'),
+  'Soft-point': require('./assets/sounds/soft-point.wav'),
 };
 
 export function createWebAudio() {
@@ -30,9 +36,9 @@ export function createWebAudio() {
     unlock() {
       return context.resume();
     },
-    play(name) {
+    play(name, style) {
       const source = context.createBufferSource();
-      source.buffer = buffers[name];
+      source.buffer = buffers[`${style}-${name}`];
       source.connect(context.destination);
       source.start();
     },
