@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
-import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useGameSounds } from './useGameSounds';
 
 const PADDLE_WIDTH = 96;
 const PADDLE_HEIGHT = 14;
@@ -26,9 +26,7 @@ export default function App() {
   const animationRef = useRef(null);
   const lastFrameTimeRef = useRef(0);
   const rallyPausedUntilRef = useRef(0);
-  const wallSoundPlayer = useAudioPlayer(require('./assets/sounds/bounce.wav'));
-  const paddleSoundPlayer = useAudioPlayer(require('./assets/sounds/click.wav'));
-  const pointSoundPlayer = useAudioPlayer(require('./assets/sounds/goal.wav'));
+  const { audioStatus, startAudio, playSound } = useGameSounds();
 
   const topPaddleXRef = useRef(0);
   const bottomPaddleXRef = useRef(0);
@@ -49,16 +47,6 @@ export default function App() {
   const [bottomScore, setBottomScore] = useState(0);
   const [matchWinner, setMatchWinner] = useState(null);
   const [started, setStarted] = useState(false);
-
-  const replaySound = (player) => {
-    try {
-      void player.seekTo(0).catch(() => {});
-      player.play();
-    } catch {
-      // Ignore transient playback issues to keep gameplay smooth.
-    }
-  };
-
   const updateBottomPaddle = (touchX) => {
     if (arena.width <= 0) {
       return;
@@ -103,13 +91,6 @@ export default function App() {
     setBottomPaddleX(initialBottom);
     resetBall(randomServeDirection(), SERVE_DELAY_MS);
   }, [arena.height, arena.width]);
-
-  useEffect(() => {
-    void setAudioModeAsync({
-      playsInSilentMode: true,
-      interruptionMode: 'mixWithOthers',
-    }).catch(() => {});
-  }, []);
 
   useEffect(() => {
     topScoreRef.current = topScore;
@@ -173,11 +154,11 @@ export default function App() {
       if (ball.x <= 0) {
         ball.x = 0;
         ball.vx = Math.abs(ball.vx);
-        replaySound(wallSoundPlayer);
+        playSound('wall');
       } else if (ball.x + BALL_SIZE >= arena.width) {
         ball.x = arena.width - BALL_SIZE;
         ball.vx = -Math.abs(ball.vx);
-        replaySound(wallSoundPlayer);
+        playSound('wall');
       }
 
       const ballCenterX = ball.x + BALL_SIZE / 2;
@@ -191,7 +172,7 @@ export default function App() {
         ball.vy = Math.abs(ball.vy) * 1.03;
         const offset = (ballCenterX - (topPaddleXRef.current + PADDLE_WIDTH / 2)) / (PADDLE_WIDTH / 2);
         ball.vx += offset * 270;
-        replaySound(paddleSoundPlayer);
+        playSound('paddle');
       }
 
       // Bottom paddle collision.
@@ -206,7 +187,7 @@ export default function App() {
         const offset =
           (ballCenterX - (bottomPaddleXRef.current + PADDLE_WIDTH / 2)) / (PADDLE_WIDTH / 2);
         ball.vx += offset * 270;
-        replaySound(paddleSoundPlayer);
+        playSound('paddle');
       }
 
       // Clamp speed so gameplay stays controllable.
@@ -218,7 +199,7 @@ export default function App() {
         const nextBottomScore = bottomScoreRef.current + 1;
         bottomScoreRef.current = nextBottomScore;
         setBottomScore(nextBottomScore);
-        replaySound(pointSoundPlayer);
+        playSound('point');
         if (nextBottomScore >= WIN_SCORE) {
           setMatchWinner('You');
           resetBall(1);
@@ -236,7 +217,7 @@ export default function App() {
         const nextTopScore = topScoreRef.current + 1;
         topScoreRef.current = nextTopScore;
         setTopScore(nextTopScore);
-        replaySound(pointSoundPlayer);
+        playSound('point');
         if (nextTopScore >= WIN_SCORE) {
           setMatchWinner('AI');
           resetBall(-1);
@@ -262,7 +243,7 @@ export default function App() {
       }
       lastFrameTimeRef.current = 0;
     };
-  }, [arena.height, arena.width, ballPosition, matchWinner, started]);
+  }, [arena.height, arena.width, ballPosition, matchWinner, playSound, started]);
 
   const netSegments = Array.from({ length: 12 }, (_, i) => i);
   const ballSpeed = Math.hypot(ballRef.current.vx, ballRef.current.vy);
@@ -286,6 +267,9 @@ export default function App() {
         <Text style={styles.scoreLabel}>You: {bottomScore}</Text>
       </View>
       <Text style={styles.goalLabel}>First to {WIN_SCORE}</Text>
+      {started && audioStatus === 'failed' ? (
+        <Text style={styles.audioWarning}>Sound unavailable</Text>
+      ) : null}
 
       <View style={styles.netContainer} pointerEvents="none">
         {netSegments.map((segment) => (
@@ -333,9 +317,10 @@ export default function App() {
           accessibilityRole="button"
           accessibilityLabel="Start Pong Duel"
           style={styles.overlay}
+          disabled={audioStatus === 'loading'}
           onPress={() => {
-            // The first tap permits sound playback in mobile browsers.
-            replaySound(paddleSoundPlayer);
+            startAudio();
+            playSound('paddle');
             restartMatch();
             setStarted(true);
           }}
@@ -343,7 +328,8 @@ export default function App() {
           <Text style={styles.overlayTitle}>Pong Duel</Text>
           <Text style={styles.overlaySub}>Drag below to move your paddle</Text>
           <Text style={styles.overlaySub}>First to seven wins</Text>
-          <Text style={styles.startButton}>Tap to play</Text>
+          {audioStatus === 'failed' ? <Text style={styles.overlaySub}>Sound unavailable</Text> : null}
+          <Text style={styles.startButton}>{audioStatus === 'loading' ? 'Loading sounds...' : 'Tap to play'}</Text>
         </Pressable>
       ) : null}
 
@@ -420,6 +406,16 @@ const styles = StyleSheet.create({
     right: 0,
     textAlign: 'center',
     color: '#93c5fd',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  audioWarning: {
+    position: 'absolute',
+    top: 110,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    color: '#fca5a5',
     fontSize: 12,
     fontWeight: '600',
   },

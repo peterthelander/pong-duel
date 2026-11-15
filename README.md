@@ -56,9 +56,13 @@ This writes static HTML, JavaScript, and bundled sound assets to `dist/`.
 Sites hosting is configured in `.openai/hosting.json`. Updating GitHub alone does
 not update the hosted game; export and publish a new Sites version as well.
 
+The browser version preloads sound effects into Web Audio buffers before play;
+native builds use Expo Audio.
+
 ## Project layout
 
 - `App.js`: game loop, touch controls, scoring, audio, and presentation.
+- `useGameSounds.web.js`, `useGameSounds.native.js`, and `webAudio.js`: sound playback.
 - `assets/sounds/`: bundled wall, paddle, and goal effects.
 - `app.json`: Expo configuration and icons.
 - `index.js`: native app registration.
@@ -67,8 +71,8 @@ not update the hosted game; export and publish a new Sites version as well.
 ## Current status
 
 The web export was checked in Chromium with a 390 × 844 touch viewport: start,
-paddle dragging, match completion, and restart. Real iPhone/Safari testing is still
-needed, including sound behavior (browser autoplay policies may affect audio).
+paddle dragging, match completion, and restart. A local production build with
+buffered sound was also tested on an iPhone; further device testing is welcome.
 
 `npx expo lint` currently reports existing game-loop React hook/ref issues.
 An ad hoc JavaScript type check also reports missing React/WAV/CSS declarations
