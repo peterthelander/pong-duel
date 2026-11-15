@@ -6,7 +6,7 @@ Expo slug and package name retain the original `demo-app` identifier.
 
 ## Play on your phone
 
-[**Play Pong Duel in your browser**](https://pong-duel-peter.peter-thelander.chatgpt.site)
+[**Play Pong Duel in your browser**](https://peterthelander.github.io/pong-duel/)
 
 Open the link in Safari or Chrome, tap **Play**, and drag in the lower part
 of the screen. No Expo Go, Tailscale, shared Wi-Fi, or running computer is needed.
@@ -69,11 +69,10 @@ npm run build:web
 ```
 
 This writes static HTML, JavaScript, and bundled sound assets to `dist/`.
-Sites hosting is configured in `.openai/hosting.json`. Updating GitHub alone does
-not update the hosted game; export and publish a new Sites version as well.
-The export contains static HTML for each route. Host it with extensionless route
-support so browser refreshes and direct links work. For local testing, use
-`npx expo serve` after exporting.
+GitHub Actions builds and deploys to GitHub Pages when changes are pushed to
+`master`. The Pages build uses the `/pong-duel` base path; to reproduce it
+locally, run `GITHUB_PAGES=true npm run build:web`. For local testing at the
+root path, use the regular build followed by `npx expo serve`.
 
 The browser version preloads sound effects into Web Audio buffers before play;
 native builds use Expo Audio.
