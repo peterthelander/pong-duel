@@ -4,7 +4,7 @@ import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGameSettings } from './gameSettings';
 import { BACKGROUNDS, calculateAiSpeed, OPPONENTS } from './gameOptions';
-import { paddleCrossingX, serveBallY } from './gamePhysics';
+import { paddleCrossing, serveBallY } from './gamePhysics';
 
 const PADDLE_WIDTH = 96;
 const PADDLE_HEIGHT = 14;
@@ -42,6 +42,7 @@ export default function App() {
   const topPaddleXRef = useRef(0);
   const bottomPaddleXRef = useRef(0);
   const bottomPaddleYRef = useRef(0);
+  const previousBottomPaddleRef = useRef({ x: 0, y: 0 });
   const winAwardedRef = useRef(false);
   const topScoreRef = useRef(0);
   const bottomScoreRef = useRef(0);
@@ -106,6 +107,7 @@ export default function App() {
     topPaddleXRef.current = initialTop;
     bottomPaddleXRef.current = initialBottom;
     bottomPaddleYRef.current = clamp(arena.height - PADDLE_MARGIN - PADDLE_HEIGHT, arena.height / 2, arena.height - PADDLE_HEIGHT);
+    previousBottomPaddleRef.current = { x: initialBottom, y: bottomPaddleYRef.current };
     setTopPaddleX(initialTop);
     setBottomPaddleX(initialBottom);
     setBottomPaddleY(bottomPaddleYRef.current);
@@ -131,6 +133,9 @@ export default function App() {
 
       const dt = Math.min((now - lastFrameTimeRef.current) / 1000, 0.033);
       lastFrameTimeRef.current = now;
+      const previousPaddle = previousBottomPaddleRef.current;
+      const paddle = { x: bottomPaddleXRef.current, y: bottomPaddleYRef.current };
+      previousBottomPaddleRef.current = paddle;
 
       if (matchWinner) {
         animationRef.current = requestAnimationFrame(step);
@@ -206,16 +211,15 @@ export default function App() {
       }
 
       // Bottom paddle collision.
-      const paddleY = bottomPaddleYRef.current;
-      const crossingX = paddleCrossingX(
+      const crossing = paddleCrossing(
         previousBallX, previousBallY, ball.x, ball.y, BALL_SIZE,
-        bottomPaddleXRef.current, paddleY, PADDLE_WIDTH
+        previousPaddle, paddle, PADDLE_WIDTH
       );
-      if (ball.vy > 0 && crossingX !== null) {
-        ball.y = paddleY - BALL_SIZE;
+      if (ball.vy > 0 && crossing !== null) {
+        ball.y = paddle.y - BALL_SIZE;
         ball.vy = -Math.abs(ball.vy) * 1.03;
         const offset =
-          (crossingX + BALL_SIZE / 2 - (bottomPaddleXRef.current + PADDLE_WIDTH / 2)) / (PADDLE_WIDTH / 2);
+          (crossing.ballX + BALL_SIZE / 2 - (crossing.paddleX + PADDLE_WIDTH / 2)) / (PADDLE_WIDTH / 2);
         ball.vx += offset * 270;
         playSound('paddle');
       }
