@@ -31,11 +31,23 @@ export const BACKGROUNDS = [
 
 export const SOUND_STYLES = ['Classic', 'Retro', 'Soft'];
 
+/**
+ * @param {number} opponentLevel
+ * @param {number} playerLevel
+ * @param {number} scoreDifference
+ * @returns {number}
+ */
 export function calculateAiSpeed(opponentLevel, playerLevel, scoreDifference) {
   const scoreBoost = Math.max(-60, Math.min(140, scoreDifference * 22));
   return Math.max(260, Math.min(850, 270 + opponentLevel * 0.5 + playerLevel * 0.12 + scoreBoost));
 }
 
+/**
+ * @param {number} playerLevel
+ * @param {number} progressPoints
+ * @param {number} opponentLevel
+ * @returns {{earnedPoints: number, playerLevel: number, progressPoints: number}}
+ */
 export function calculateWinProgress(playerLevel, progressPoints, opponentLevel) {
   const earnedPoints = Math.floor(opponentLevel / 100) * 2;
   const total = progressPoints + earnedPoints;

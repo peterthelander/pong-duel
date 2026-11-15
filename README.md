@@ -62,7 +62,10 @@ while playing. See [Expo's device setup guide](https://docs.expo.dev/get-started
 
 `npm run android` and `npm run ios` open supported emulator/simulator setups.
 For browser development, run `npm run web`. Run `npm test` for the game-rules
-tests. To create a hosted build:
+tests, `npm run lint` for linting, and `npm run typecheck` for strict JavaScript
+type checking of `gamePhysics.js` and `gameOptions.js`. CI runs these checks
+before deploying. The rest of the app is not yet type-checked.
+To create a hosted build:
 
 ```bash
 npm run build:web
@@ -97,9 +100,8 @@ paddle dragging, match completion, and restart. A local production build with
 buffered sound was also tested on an iPhone; further device testing is welcome.
 
 `npx eslint App.js` currently reports existing game-loop React hook/ref issues.
-An ad hoc JavaScript type check also reports missing React/WAV/CSS declarations
-and `Animated.View` typing issues. These checks are not yet clean; the production
-web export is the build check. Native Expo Go gameplay was not verified in this change.
+The app's React components and platform integrations are not yet type-checked.
+Native Expo Go gameplay was not verified in this change.
 
 ## License
 
