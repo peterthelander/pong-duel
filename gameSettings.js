@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { calculateWinProgress } from './gameOptions';
-import { defaults, validatePreferences } from './gamePreferences';
+import { defaults, recordOpponentWin, validatePreferences } from './gamePreferences';
 import { useGameSounds } from './useGameSounds';
 
 const STORAGE_KEY = 'pong-duel-preferences-v1';
@@ -45,11 +44,8 @@ export function GameSettingsProvider({ children }) {
   }, [preferences, storageAvailable, storageReady]);
 
   const updatePreference = (key, value) => setPreferences((current) => ({ ...current, [key]: value }));
-  const awardWin = useCallback((opponentLevel) => {
-    setPreferences((current) => {
-      const progress = calculateWinProgress(current.playerLevel, current.progressPoints, opponentLevel);
-      return { ...current, playerLevel: progress.playerLevel, progressPoints: progress.progressPoints };
-    });
+  const awardWin = useCallback((opponentName) => {
+    setPreferences((current) => recordOpponentWin(current, opponentName));
   }, []);
 
   return (

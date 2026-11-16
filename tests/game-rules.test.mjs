@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { AVATAR_EYE_COLORS, AVATAR_HAIR_COLORS, AVATAR_HAIRSTYLES, AVATAR_MOUTHS, AVATAR_SHOULDERS, AVATAR_SKIN_COLORS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, calculateAiSpeed, calculateWinProgress, eyelashColorForEyes, OPPONENTS, PADDLE_COLORS } from '../gameOptions.js';
-import { defaults, validatePreferences } from '../gamePreferences.js';
+import { defaults, recordOpponentWin, validatePreferences } from '../gamePreferences.js';
 import { paddleCrossing, serveBallY } from '../gamePhysics.js';
 
 test('wins award one point per 100 opponent levels and advance every three points', () => {
@@ -10,6 +10,28 @@ test('wins award one point per 100 opponent levels and advance every three point
   assert.deepEqual(calculateWinProgress(1, 2, 100), { earnedPoints: 1, playerLevel: 2, progressPoints: 0 });
   assert.deepEqual(calculateWinProgress(850, 2, 600), { earnedPoints: 6, playerLevel: 852, progressPoints: 2 });
   assert.deepEqual(calculateWinProgress(999, 2, 600), { earnedPoints: 6, playerLevel: 1000, progressPoints: 2 });
+});
+
+test('match wins are counted per opponent and preserve progress across saves', () => {
+  const { opponentWins, ...oldPreferences } = defaults;
+  let preferences = validatePreferences({ ...oldPreferences, playerName: 'Player' });
+  assert.deepEqual(preferences.opponentWins, {});
+  const previous = preferences;
+  preferences = recordOpponentWin(preferences, 'Ruby');
+  assert.deepEqual(previous.opponentWins, {});
+  assert.deepEqual(preferences.opponentWins, { Ruby: 1 });
+  assert.equal(preferences.playerLevel, 3);
+  assert.equal(preferences.progressPoints, 1);
+  preferences = recordOpponentWin(preferences, 'Nova');
+  preferences = recordOpponentWin(preferences, 'Ruby');
+  preferences = recordOpponentWin(preferences, 'Ruby');
+  assert.deepEqual(preferences.opponentWins, { Ruby: 3, Nova: 1 });
+  assert.equal(preferences.playerName, 'Player');
+  assert.deepEqual(validatePreferences(JSON.parse(JSON.stringify(preferences))), preferences);
+  assert.throws(() => recordOpponentWin(preferences, 'Unknown'), /Unknown opponent/);
+  for (const invalid of [null, [], { Ruby: -1 }, { Ruby: 1.5 }, { Ruby: '3' }, { Ruby: Number.MAX_SAFE_INTEGER + 1 }]) {
+    assert.throws(() => validatePreferences({ ...defaults, opponentWins: invalid }), /invalid/);
+  }
 });
 
 test('new and updated opponents are selectable, persistent, and award points for their levels', () => {
@@ -26,6 +48,12 @@ test('new and updated opponents are selectable, persistent, and award points for
     assert.equal(validatePreferences({ ...defaults, opponent: name }).opponent, name);
     assert.equal(calculateWinProgress(1, 0, matches[0].level).earnedPoints, level / 100);
   }
+});
+
+test('Nell has long hair', () => {
+  const nell = OPPONENTS.find((opponent) => opponent.name === 'Nell');
+  assert.ok(nell);
+  assert.equal(nell.longHair, true);
 });
 
 test('higher opponent levels make the AI faster, including at a high player level and score lead', () => {

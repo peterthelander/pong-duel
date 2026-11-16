@@ -238,7 +238,7 @@ export default function App() {
         if (nextBottomScore >= WIN_SCORE) {
           if (!winAwardedRef.current) {
             winAwardedRef.current = true;
-            awardWin(opponentData.level);
+            awardWin(opponentData.name);
           }
           setMatchWinner('You');
           resetBall(1);
@@ -282,7 +282,7 @@ export default function App() {
       }
       lastFrameTimeRef.current = 0;
     };
-  }, [arena.height, arena.width, awardWin, BALL_SIZE, ballPosition, matchWinner, opponentData.level, playerLevel, playSound]);
+  }, [arena.height, arena.width, awardWin, BALL_SIZE, ballPosition, matchWinner, opponentData.level, opponentData.name, playerLevel, playSound]);
 
   const netSegments = Array.from({ length: 12 }, (_, i) => i);
 
@@ -303,12 +303,12 @@ export default function App() {
         <View style={styles.scoreEntry}>
           <OpponentAvatar opponent={opponentData} size={32} />
           <Text numberOfLines={1} style={styles.scoreName}>{opponentData.name}</Text>
-          <Text numberOfLines={1} style={styles.scoreLabel}> {topScore}</Text>
+          <Text numberOfLines={1} style={styles.scoreLabel}>: {topScore}</Text>
         </View>
         <View style={styles.scoreEntry}>
           <OpponentAvatar opponent={playerAvatar} size={32} />
           <Text numberOfLines={1} style={styles.scoreName}>{playerName || 'You'}</Text>
-          <Text numberOfLines={1} style={styles.scoreLabel}> {bottomScore}</Text>
+          <Text numberOfLines={1} style={styles.scoreLabel}>: {bottomScore}</Text>
         </View>
       </View>
       <Text style={styles.goalLabel}>First to {WIN_SCORE}</Text>

@@ -21,6 +21,8 @@ Use your phone's browser if GitHub's in-app browser has trouble opening it.
 - The first player to score seven points wins. Tap the result screen to restart.
 - Wall hits, paddle hits, and goals have bundled sound effects.
 - Use the arrows on the home screen to choose an illustrated AI opponent.
+  The card shows how many matches you have won against that opponent; counts
+  are saved on this device and start at zero for existing players.
   Orly and Mike are level 300; Jeremiah, Victoria, and Uma are level 400;
   Winter and John are level 500; Esther and Madison are level 600; Ruby and
   Benjamin are level 700; Nova and Tori are level 800; Meg, Dara, and Ezra are

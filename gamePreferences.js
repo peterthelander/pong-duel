@@ -1,4 +1,4 @@
-import { applyProgressPoints, AVATAR_EYE_COLORS, AVATAR_HAIR_COLORS, AVATAR_HAIRSTYLES, AVATAR_MOUTHS, AVATAR_SHOULDERS, AVATAR_SKIN_COLORS, BACKGROUNDS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, MAX_PLAYER_LEVEL, OPPONENTS, PADDLE_COLORS, POINTS_PER_LEVEL, SOUND_STYLES } from './gameOptions.js';
+import { applyProgressPoints, AVATAR_EYE_COLORS, AVATAR_HAIR_COLORS, AVATAR_HAIRSTYLES, AVATAR_MOUTHS, AVATAR_SHOULDERS, AVATAR_SKIN_COLORS, BACKGROUNDS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, calculateWinProgress, MAX_PLAYER_LEVEL, OPPONENTS, PADDLE_COLORS, POINTS_PER_LEVEL, SOUND_STYLES } from './gameOptions.js';
 
 const PROGRESS_RULE_VERSION = 2;
 
@@ -28,6 +28,7 @@ export const defaults = {
   playerLevel: 1,
   progressPoints: 0,
   progressRuleVersion: PROGRESS_RULE_VERSION,
+  opponentWins: {},
 };
 
 export function validatePreferences(value) {
@@ -40,6 +41,7 @@ export function validatePreferences(value) {
       ...(!('ballSize' in value) && { ballSize: defaults.ballSize }),
       ...(!('ballPattern' in value) && { ballPattern: defaults.ballPattern }),
       ...(!('playerAvatar' in value) && { playerAvatar: defaults.playerAvatar }),
+      ...(!('opponentWins' in value) && { opponentWins: defaults.opponentWins }),
       ...value,
     };
     if (value.playerAvatar && typeof value.playerAvatar === 'object' && !Array.isArray(value.playerAvatar)) {
@@ -79,6 +81,8 @@ export function validatePreferences(value) {
       !AVATAR_SHOULDERS.some((item) => item.value === value.playerAvatar.shoulders) ||
       typeof value.playerAvatar.glasses !== 'boolean' ||
       typeof value.playerAvatar.necklace !== 'boolean' ||
+      !value.opponentWins || typeof value.opponentWins !== 'object' || Array.isArray(value.opponentWins) ||
+      !Object.values(value.opponentWins).every((count) => Number.isSafeInteger(count) && count >= 0) ||
       !Number.isInteger(value.playerLevel) || value.playerLevel < 1 || value.playerLevel > MAX_PLAYER_LEVEL ||
       !Number.isInteger(value.progressPoints) || value.progressPoints < 0 ||
       value.progressPoints >= (version === 1 ? 5 : POINTS_PER_LEVEL)) {
@@ -93,4 +97,20 @@ export function validatePreferences(value) {
     };
   }
   return value;
+}
+
+export function recordOpponentWin(preferences, opponentName) {
+  const opponent = OPPONENTS.find((item) => item.name === opponentName);
+  if (!opponent) throw new Error(`Unknown opponent: ${opponentName}`);
+  const wins = Object.prototype.hasOwnProperty.call(preferences.opponentWins, opponentName) ? preferences.opponentWins[opponentName] : 0;
+  if (!Number.isSafeInteger(wins) || wins < 0 || wins === Number.MAX_SAFE_INTEGER) {
+    throw new Error(`Invalid win count for ${opponentName}.`);
+  }
+  const progress = calculateWinProgress(preferences.playerLevel, preferences.progressPoints, opponent.level);
+  return {
+    ...preferences,
+    playerLevel: progress.playerLevel,
+    progressPoints: progress.progressPoints,
+    opponentWins: { ...preferences.opponentWins, [opponentName]: wins + 1 },
+  };
 }

@@ -7,7 +7,7 @@ import { useGameSettings } from '../../gameSettings';
 import { menuStyles as styles } from '../../menuStyles';
 
 export default function HomeScreen() {
-  const { soundEnabled, soundStyle, audioStatus, startAudio, playSound, opponent, background, playerName, playerLevel, updatePreference, storageError, setEnteredGame } = useGameSettings();
+  const { soundEnabled, soundStyle, audioStatus, startAudio, playSound, opponent, opponentWins, background, playerName, playerLevel, updatePreference, storageError, setEnteredGame } = useGameSettings();
   const insets = useSafeAreaInsets();
   const loading = soundEnabled && audioStatus === 'loading';
   const opponentIndex = OPPONENTS.findIndex((item) => item.name === opponent);
@@ -30,6 +30,7 @@ export default function HomeScreen() {
             <OpponentAvatar opponent={selected} />
             <Text style={styles.optionTitle}>{selected.name}</Text>
             <Text style={styles.optionSubtitle}>AI · Level {selected.level}</Text>
+            <Text style={styles.optionSubtitle}>Wins: {opponentWins[selected.name] ?? 0}</Text>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Next opponent" style={styles.arrow} onPress={() => updatePreference('opponent', OPPONENTS[(opponentIndex + 1) % OPPONENTS.length].name)}>
             <Text style={styles.arrowText}>›</Text>

@@ -66,7 +66,7 @@ export const AVATAR_SHOULDERS = [
 ];
 
 export const OPPONENTS = [
-  { name: 'Nell', level: 300, skin: '#eab89b', hair: '#573326', shirt: '#a78bfa' },
+  { name: 'Nell', level: 300, skin: '#eab89b', hair: '#573326', shirt: '#a78bfa', longHair: true },
   { name: 'Mike', level: 300, skin: '#d29d78', hair: '#282526', shirt: '#60a5fa' },
   { name: 'Orly', level: 300, skin: '#e7bfa5', hair: '#6b432e', shirt: '#c084fc', eyes: '#59402a', lashes: true, longHair: true },
   { name: 'Jeremiah', level: 400, skin: '#c98f6c', hair: '#30221f', shirt: '#34d399', eyes: '#3b241b' },
