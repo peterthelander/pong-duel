@@ -30,6 +30,28 @@ export const BACKGROUNDS = [
 ];
 
 export const SOUND_STYLES = ['Classic', 'Retro', 'Soft'];
+export const POINTS_PER_LEVEL = 3;
+export const MAX_PLAYER_LEVEL = 1000;
+
+/**
+ * @param {number} playerLevel
+ * @param {number} points
+ * @returns {{playerLevel: number, progressPoints: number}}
+ */
+export function applyProgressPoints(playerLevel, points) {
+  return {
+    playerLevel: Math.min(MAX_PLAYER_LEVEL, playerLevel + Math.floor(points / POINTS_PER_LEVEL)),
+    progressPoints: points % POINTS_PER_LEVEL,
+  };
+}
+
+/**
+ * @param {number} opponentLevel
+ * @returns {number}
+ */
+export function pointsForOpponent(opponentLevel) {
+  return Math.floor(opponentLevel / 100);
+}
 
 /**
  * @param {number} opponentLevel
@@ -49,11 +71,9 @@ export function calculateAiSpeed(opponentLevel, playerLevel, scoreDifference) {
  * @returns {{earnedPoints: number, playerLevel: number, progressPoints: number}}
  */
 export function calculateWinProgress(playerLevel, progressPoints, opponentLevel) {
-  const earnedPoints = Math.floor(opponentLevel / 100) * 2;
-  const total = progressPoints + earnedPoints;
+  const earnedPoints = pointsForOpponent(opponentLevel);
   return {
     earnedPoints,
-    playerLevel: Math.min(1000, playerLevel + Math.floor(total / 5) * 2),
-    progressPoints: total % 5,
+    ...applyProgressPoints(playerLevel, progressPoints + earnedPoints),
   };
 }

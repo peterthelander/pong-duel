@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGameSettings } from './gameSettings';
-import { BACKGROUNDS, calculateAiSpeed, OPPONENTS } from './gameOptions';
+import { BACKGROUNDS, calculateAiSpeed, OPPONENTS, pointsForOpponent } from './gameOptions';
 import { paddleCrossing, serveBallY } from './gamePhysics';
 
 const PADDLE_WIDTH = 96;
@@ -353,7 +353,7 @@ export default function App() {
       {matchWinner ? (
         <Pressable accessibilityRole="button" accessibilityLabel="Play again" style={styles.overlay} onPress={restartMatch}>
           <Text style={styles.overlayTitle}>{matchWinner === 'You' ? 'You Win' : `${matchWinner} Wins`}</Text>
-          {matchWinner === 'You' ? <Text style={styles.overlaySub}>+{opponentData.level / 100 * 2} progress points</Text> : null}
+          {matchWinner === 'You' ? <Text style={styles.overlaySub}>+{pointsForOpponent(opponentData.level)} progress {pointsForOpponent(opponentData.level) === 1 ? 'point' : 'points'}</Text> : null}
           <Text style={styles.overlaySub}>Tap to play again</Text>
         </Pressable>
       ) : null}

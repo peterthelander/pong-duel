@@ -1,13 +1,32 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { calculateWinProgress } from '../gameOptions.js';
+import { defaults, validatePreferences } from '../gamePreferences.js';
 import { paddleCrossing, serveBallY } from '../gamePhysics.js';
 
-test('wins award opponent-based points and carry progress across levels', () => {
-  assert.deepEqual(calculateWinProgress(1, 0, 100), { earnedPoints: 2, playerLevel: 1, progressPoints: 2 });
-  assert.deepEqual(calculateWinProgress(1, 2, 200), { earnedPoints: 4, playerLevel: 3, progressPoints: 1 });
-  assert.deepEqual(calculateWinProgress(850, 4, 300), { earnedPoints: 6, playerLevel: 854, progressPoints: 0 });
-  assert.deepEqual(calculateWinProgress(999, 4, 600), { earnedPoints: 12, playerLevel: 1000, progressPoints: 1 });
+test('wins award one point per 100 opponent levels and advance every three points', () => {
+  assert.deepEqual(calculateWinProgress(1, 0, 100), { earnedPoints: 1, playerLevel: 1, progressPoints: 1 });
+  assert.deepEqual(calculateWinProgress(1, 1, 200), { earnedPoints: 2, playerLevel: 2, progressPoints: 0 });
+  assert.deepEqual(calculateWinProgress(1, 2, 100), { earnedPoints: 1, playerLevel: 2, progressPoints: 0 });
+  assert.deepEqual(calculateWinProgress(850, 2, 600), { earnedPoints: 6, playerLevel: 852, progressPoints: 2 });
+  assert.deepEqual(calculateWinProgress(999, 2, 600), { earnedPoints: 6, playerLevel: 1000, progressPoints: 2 });
+});
+
+test('saved progress is converted once without losing preferences or levels', () => {
+  const { progressRuleVersion, ...legacy } = defaults;
+  for (let points = 0; points <= 4; points++) {
+    const restored = validatePreferences({ ...legacy, playerLevel: 10, playerName: 'Player', progressPoints: points });
+    assert.equal(restored.playerLevel, 10 + Math.floor(points / 3));
+    assert.equal(restored.progressPoints, points % 3);
+    assert.equal(restored.progressRuleVersion, progressRuleVersion);
+    assert.equal(restored.playerName, 'Player');
+    assert.deepEqual(validatePreferences(restored), restored);
+  }
+  const { progressPoints, ...older } = legacy;
+  assert.equal(validatePreferences(older).progressPoints, 0);
+  assert.equal(validatePreferences({ ...legacy, playerLevel: 1000, progressPoints: 4 }).playerLevel, 1000);
+  assert.throws(() => validatePreferences({ ...defaults, progressPoints: 3 }), /invalid/);
+  assert.throws(() => validatePreferences({ ...defaults, progressRuleVersion: 3 }), /invalid/);
 });
 
 test('a serve starts above an overlapping player paddle', () => {

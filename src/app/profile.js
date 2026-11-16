@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGameSettings } from '../../gameSettings';
+import { POINTS_PER_LEVEL } from '../../gameOptions';
 import { menuStyles as styles } from '../../menuStyles';
 
 export default function ProfileScreen() {
@@ -23,8 +24,8 @@ export default function ProfileScreen() {
         <Text style={styles.inputLabel}>Name</Text>
         <TextInput accessibilityLabel="Name" value={name} onChangeText={setName} maxLength={30} placeholder="Player" placeholderTextColor="#94a3b8" style={styles.input} />
         <Text style={styles.inputLabel}>Level {playerLevel}</Text>
-        <Text style={styles.hint}>Progress: {progressPoints} of 5 points. Every 5 points earns 2 levels.</Text>
-        <Text style={styles.hint}>Win matches to earn points. Higher-level opponents award more points.</Text>
+        <Text style={styles.hint}>Progress: {progressPoints} of {POINTS_PER_LEVEL} points. Every {POINTS_PER_LEVEL} points earns 1 level.</Text>
+        <Text style={styles.hint}>Win matches to earn 1 point per 100 opponent levels.</Text>
         <Text style={styles.hint}>A higher level makes your opponent faster.</Text>
         {storageError ? <Text style={styles.warning}>{storageError}</Text> : null}
       </View>

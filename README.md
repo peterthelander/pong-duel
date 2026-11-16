@@ -26,9 +26,10 @@ Use your phone's browser if GitHub's in-app browser has trouble opening it.
   Soft sounds; use **Characters** to choose a paddle color.
 - Use **Background** to change the arena design. Use **Profile** to edit your
   name and see your level and progress. New players start at level 1; existing
-  saved levels are retained. Winning earns two progress points per 100 opponent
-  levels. Each five points raises your level by two, up to level 1000; remaining
-  points carry over. Losses and abandoned matches earn no points. A higher player
+  saved levels are retained. Winning earns one progress point per 100 opponent
+  levels. Each three points raises your level by one, up to level 1000; remaining
+  points carry over. Existing saved points are converted using the new rule.
+  Losses and abandoned matches earn no points. A higher player
   level also makes the AI faster.
 - Tap **Home** during or after a match to end it and return to the home screen.
   The next match starts fresh.
@@ -84,7 +85,7 @@ native builds use Expo Audio.
 
 - `src/app/`: Expo Router screens and layout.
 - `App.js`: game loop, touch controls, scoring, and game presentation.
-- `gameSettings.js`, `gameOptions.js`, and `menuStyles.js`: saved preferences and menu presentation.
+- `gameSettings.js`, `gamePreferences.js`, `gameOptions.js`, and `menuStyles.js`: saved preferences and menu presentation.
 - `OpponentAvatar.js`: illustrated opponent portraits.
 - `useGameSounds.web.js`, `useGameSounds.native.js`, and `webAudio.js`: sound playback.
 - `assets/sounds/`: bundled wall, paddle, and goal effects.

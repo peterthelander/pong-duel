@@ -1,38 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { BACKGROUNDS, calculateWinProgress, OPPONENTS, PADDLE_COLORS, SOUND_STYLES } from './gameOptions';
+import { calculateWinProgress } from './gameOptions';
+import { defaults, validatePreferences } from './gamePreferences';
 import { useGameSounds } from './useGameSounds';
 
 const STORAGE_KEY = 'pong-duel-preferences-v1';
-const defaults = {
-  soundEnabled: true,
-  soundStyle: 'Classic',
-  paddleColor: PADDLE_COLORS[0].color,
-  opponent: 'Nell',
-  background: 'Night',
-  playerName: '',
-  playerLevel: 1,
-  progressPoints: 0,
-};
-
-function validatePreferences(value) {
-  if (value && typeof value === 'object' && !('progressPoints' in value)) {
-    value = { ...value, progressPoints: 0 };
-  }
-  if (!value || typeof value !== 'object' ||
-      typeof value.soundEnabled !== 'boolean' ||
-      !SOUND_STYLES.includes(value.soundStyle) ||
-      !PADDLE_COLORS.some((item) => item.color === value.paddleColor) ||
-      !OPPONENTS.some((item) => item.name === value.opponent) ||
-      !BACKGROUNDS.some((item) => item.name === value.background) ||
-      typeof value.playerName !== 'string' || value.playerName.length > 30 ||
-      !Number.isInteger(value.playerLevel) || value.playerLevel < 1 || value.playerLevel > 1000 ||
-      !Number.isInteger(value.progressPoints) || value.progressPoints < 0 || value.progressPoints > 4) {
-    throw new Error('Saved preferences are invalid.');
-  }
-  return value;
-}
-
 const GameSettingsContext = createContext(null);
 
 export function GameSettingsProvider({ children }) {
