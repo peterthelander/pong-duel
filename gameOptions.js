@@ -13,7 +13,17 @@ export const PADDLE_COLORS = [
 
 export const OPPONENTS = [
   { name: 'Nell', level: 300, skin: '#eab89b', hair: '#573326', shirt: '#a78bfa' },
-  { name: 'Mike', level: 100, skin: '#d29d78', hair: '#282526', shirt: '#60a5fa' },
+  { name: 'Mike', level: 300, skin: '#d29d78', hair: '#282526', shirt: '#60a5fa' },
+  { name: 'Orly', level: 300, skin: '#e7bfa5', hair: '#6b432e', shirt: '#c084fc', eyes: '#59402a', lashes: true, longHair: true },
+  { name: 'Jeremiah', level: 400, skin: '#c98f6c', hair: '#30221f', shirt: '#34d399', eyes: '#3b241b' },
+  { name: 'Victoria', level: 400, skin: '#e8b99a', hair: '#4b2925', shirt: '#f472b6', eyes: '#59402a', lashes: true, longHair: true },
+  { name: 'Uma', level: 400, skin: '#b87d5c', hair: '#241a18', shirt: '#fbbf24', eyes: '#3b241b', lashes: true, longHair: true },
+  { name: 'Winter', level: 500, skin: '#f0d0b5', hair: '#c49b63', shirt: '#93c5fd', eyes: '#3b82f6', lashes: true, longHair: true },
+  { name: 'John', level: 500, skin: '#d8a682', hair: '#493125', shirt: '#fb923c', eyes: '#59402a' },
+  { name: 'Esther', level: 600, skin: '#d8a682', hair: '#3e2723', shirt: '#a78bfa', eyes: '#59402a', lashes: true, longHair: true },
+  { name: 'Madison', level: 600, skin: '#f0d0b5', hair: '#a27750', shirt: '#f472b6', eyes: '#3b82f6', lashes: true, longHair: true },
+  { name: 'Ruby', level: 700, skin: '#e7bfa5', hair: '#8b3e2f', shirt: '#f87171', eyes: '#59402a', lashes: true, longHair: true },
+  { name: 'Benjamin', level: 700, skin: '#c98f6c', hair: '#30221f', shirt: '#60a5fa', eyes: '#3b241b' },
   { name: 'Rose', level: 100, skin: '#e7b49b', hair: '#653b33', shirt: '#fb7185', longHair: true },
   { name: 'Linnie', level: 100, skin: '#d6a17f', hair: '#30221f', shirt: '#a78bfa', longHair: true },
   { name: 'Jake', level: 200, skin: '#f1c7a6', hair: '#a36836', shirt: '#4ade80' },

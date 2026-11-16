@@ -21,7 +21,9 @@ Use your phone's browser if GitHub's in-app browser has trouble opening it.
 - The first player to score seven points wins. Tap the result screen to restart.
 - Wall hits, paddle hits, and goals have bundled sound effects.
 - Use the arrows on the home screen to choose an illustrated AI opponent.
-  Higher opponent levels make the AI faster.
+  Orly and Mike are level 300; Jeremiah, Victoria, and Uma are level 400;
+  Winter and John are level 500; Esther and Madison are level 600; Ruby and
+  Benjamin are level 700. Higher opponent levels make the AI faster.
 - Use **Settings** to turn sound effects on or off and choose Classic, Retro, or
   Soft sounds; use **Characters** to choose a paddle color.
 - Use **Background** to change the arena design. Use **Profile** to edit your
