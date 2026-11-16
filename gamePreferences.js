@@ -1,4 +1,4 @@
-import { applyProgressPoints, BACKGROUNDS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, MAX_PLAYER_LEVEL, OPPONENTS, PADDLE_COLORS, POINTS_PER_LEVEL, SOUND_STYLES } from './gameOptions.js';
+import { applyProgressPoints, AVATAR_HAIR_COLORS, AVATAR_SKIN_COLORS, BACKGROUNDS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, MAX_PLAYER_LEVEL, OPPONENTS, PADDLE_COLORS, POINTS_PER_LEVEL, SOUND_STYLES } from './gameOptions.js';
 
 const PROGRESS_RULE_VERSION = 2;
 
@@ -12,6 +12,13 @@ export const defaults = {
   opponent: 'Nell',
   background: 'Night',
   playerName: '',
+  playerAvatar: {
+    skin: AVATAR_SKIN_COLORS[1].color,
+    hair: AVATAR_HAIR_COLORS[1].color,
+    shirt: PADDLE_COLORS[0].color,
+    longHair: false,
+    lashes: false,
+  },
   playerLevel: 1,
   progressPoints: 0,
   progressRuleVersion: PROGRESS_RULE_VERSION,
@@ -26,6 +33,7 @@ export function validatePreferences(value) {
       ...(!('ballColor' in value) && { ballColor: defaults.ballColor }),
       ...(!('ballSize' in value) && { ballSize: defaults.ballSize }),
       ...(!('ballPattern' in value) && { ballPattern: defaults.ballPattern }),
+      ...(!('playerAvatar' in value) && { playerAvatar: defaults.playerAvatar }),
       ...value,
     };
   }
@@ -41,6 +49,12 @@ export function validatePreferences(value) {
       !OPPONENTS.some((item) => item.name === value.opponent) ||
       !BACKGROUNDS.some((item) => item.name === value.background) ||
       typeof value.playerName !== 'string' || value.playerName.length > 30 ||
+      !value.playerAvatar || typeof value.playerAvatar !== 'object' ||
+      !AVATAR_SKIN_COLORS.some((item) => item.color === value.playerAvatar.skin) ||
+      !AVATAR_HAIR_COLORS.some((item) => item.color === value.playerAvatar.hair) ||
+      !PADDLE_COLORS.some((item) => item.color === value.playerAvatar.shirt) ||
+      typeof value.playerAvatar.longHair !== 'boolean' ||
+      typeof value.playerAvatar.lashes !== 'boolean' ||
       !Number.isInteger(value.playerLevel) || value.playerLevel < 1 || value.playerLevel > MAX_PLAYER_LEVEL ||
       !Number.isInteger(value.progressPoints) || value.progressPoints < 0 ||
       value.progressPoints >= (version === 1 ? 5 : POINTS_PER_LEVEL)) {

@@ -2,17 +2,43 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import OpponentAvatar from '../../OpponentAvatar';
 import { useGameSettings } from '../../gameSettings';
-import { POINTS_PER_LEVEL } from '../../gameOptions';
+import { AVATAR_HAIR_COLORS, AVATAR_SKIN_COLORS, PADDLE_COLORS, POINTS_PER_LEVEL } from '../../gameOptions';
 import { menuStyles as styles } from '../../menuStyles';
 
+function AppearanceOptions({ label, options, value, onChange }) {
+  return (
+    <>
+      <Text style={styles.inputLabel}>{label}</Text>
+      <View style={styles.appearanceOptions}>
+        {options.map((option) => (
+          <Pressable
+            key={option.name}
+            accessibilityRole="button"
+            accessibilityLabel={`${option.name} ${label.toLowerCase()}${value === option.value ? ', selected' : ''}`}
+            accessibilityState={{ selected: value === option.value }}
+            style={[styles.appearanceOption, value === option.value && styles.colorSelected]}
+            onPress={() => onChange(option.value)}
+          >
+            {option.color ? <View style={[styles.appearanceSwatch, { backgroundColor: option.color }]} /> : null}
+            <Text style={styles.appearanceOptionText}>{option.name}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </>
+  );
+}
+
 export default function ProfileScreen() {
-  const { playerName, playerLevel, progressPoints, updatePreference, storageError } = useGameSettings();
+  const { playerName, playerAvatar, playerLevel, progressPoints, updatePreference, storageError } = useGameSettings();
   const [name, setName] = useState(playerName);
+  const [avatar, setAvatar] = useState(playerAvatar);
   const insets = useSafeAreaInsets();
 
   const save = () => {
     updatePreference('playerName', name.trim());
+    updatePreference('playerAvatar', avatar);
     router.replace('/');
   };
 
@@ -27,6 +53,13 @@ export default function ProfileScreen() {
         <Text style={styles.hint}>Progress: {progressPoints} of {POINTS_PER_LEVEL} points. Every {POINTS_PER_LEVEL} points earns 1 level.</Text>
         <Text style={styles.hint}>Win matches to earn 1 point per 100 opponent levels.</Text>
         <Text style={styles.hint}>A higher level makes your opponent faster.</Text>
+        <Text style={styles.inputLabel}>Your appearance</Text>
+        <View style={styles.avatarPreview}><OpponentAvatar opponent={avatar} /></View>
+        <AppearanceOptions label="Hair length" options={[{ name: 'Short', value: false }, { name: 'Long', value: true }]} value={avatar.longHair} onChange={(longHair) => setAvatar((current) => ({ ...current, longHair }))} />
+        <AppearanceOptions label="Hair color" options={AVATAR_HAIR_COLORS.map(({ name, color }) => ({ name, color, value: color }))} value={avatar.hair} onChange={(hair) => setAvatar((current) => ({ ...current, hair }))} />
+        <AppearanceOptions label="Skin color" options={AVATAR_SKIN_COLORS.map(({ name, color }) => ({ name, color, value: color }))} value={avatar.skin} onChange={(skin) => setAvatar((current) => ({ ...current, skin }))} />
+        <AppearanceOptions label="Shirt color" options={PADDLE_COLORS.map(({ name, color }) => ({ name, color, value: color }))} value={avatar.shirt} onChange={(shirt) => setAvatar((current) => ({ ...current, shirt }))} />
+        <AppearanceOptions label="Eyelashes" options={[{ name: 'No', value: false }, { name: 'Yes', value: true }]} value={avatar.lashes} onChange={(lashes) => setAvatar((current) => ({ ...current, lashes }))} />
         {storageError ? <Text style={styles.warning}>{storageError}</Text> : null}
       </View>
       <Pressable accessibilityRole="button" style={styles.playButton} onPress={save}><Text style={styles.playButtonText}>Save</Text></Pressable>

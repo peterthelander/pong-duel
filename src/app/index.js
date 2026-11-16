@@ -66,7 +66,7 @@ export default function HomeScreen() {
         <View style={styles.optionsSecondary}>
           <Pressable accessibilityRole="button" style={styles.option} onPress={() => router.push('/profile')}>
             <Text style={styles.optionTitle}>Profile</Text>
-            <Text style={styles.optionSubtitle}>Name and level</Text>
+            <Text style={styles.optionSubtitle}>Name and appearance</Text>
           </Pressable>
           <Pressable accessibilityRole="button" style={styles.option} onPress={() => router.push('/background')}>
             <Text style={styles.optionTitle}>Background</Text>

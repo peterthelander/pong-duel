@@ -24,14 +24,18 @@ Use your phone's browser if GitHub's in-app browser has trouble opening it.
   Orly and Mike are level 300; Jeremiah, Victoria, and Uma are level 400;
   Winter and John are level 500; Esther and Madison are level 600; Ruby and
   Benjamin are level 700; Nova and Tori are level 800; Meg, Dara, and Ezra are
-  level 900; Emma and Victor are level 1000. Higher opponent levels make the AI
-  faster, up to its speed limit.
+  level 900; Emma and Victor are level 1000. Each 100-level tier makes the AI
+  faster, with level 100 the easiest and level 1000 the hardest, up to its speed
+  limit.
 - Use **Settings** to turn sound effects on or off and choose Classic, Retro, or
   Soft sounds; use **Characters** to choose a paddle color.
 - Use **Ball** on the home screen to choose its color, size, and pattern.
   Ball size changes its collision size during play.
 - Use **Background** to change the arena design. Use **Profile** to edit your
-  name and see your level and progress. New players start at level 1; existing
+  name, customize your illustrated portrait, and see your level and progress.
+  Choose your hair length and color, skin color, shirt color, and eyelashes;
+  Save applies the changes and Cancel discards them. Small portraits of you and
+  your opponent appear alongside the match scores. New players start at level 1; existing
   saved levels are retained. Winning earns one progress point per 100 opponent
   levels. Each three points raises your level by one, up to level 1000; remaining
   points carry over. Existing saved points are converted using the new rule.
@@ -42,7 +46,7 @@ Use your phone's browser if GitHub's in-app browser has trouble opening it.
 
 Scores and match state reset when the app restarts. Preferences and the optional
 profile name and level are saved unencrypted on the device; they are not sent to
-a server. Profile photos are not supported yet. The game has no backend, account
+a server. The game has no backend, account
 system, or API keys. The hosted browser version needs an internet connection to
 load the app and sound files.
 

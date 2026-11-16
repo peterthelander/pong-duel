@@ -41,6 +41,11 @@ export const menuStyles = StyleSheet.create({
   inputLabel: { color: '#dbeafe', fontSize: 16, fontWeight: '700', marginTop: 20, marginBottom: 8 },
   input: { backgroundColor: '#10283b', color: '#f8fafc', borderColor: '#475569', borderWidth: 1, borderRadius: 12, padding: 12, minHeight: 48, fontSize: 16 },
   hint: { color: '#93c5fd', marginTop: 10 },
+  avatarPreview: { alignItems: 'center', padding: 12, borderRadius: 16, backgroundColor: '#10283b' },
+  appearanceOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  appearanceOption: { minHeight: 44, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 2, borderColor: '#334155', borderRadius: 12, backgroundColor: '#10283b' },
+  appearanceSwatch: { width: 20, height: 20, borderRadius: 10, borderWidth: 1, borderColor: '#94a3b8' },
+  appearanceOptionText: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
   backgroundSample: { width: 70, height: 30, borderWidth: 4, borderRadius: 8 },
   soundOption: { width: 100, minHeight: 70, padding: 10, borderWidth: 2, borderColor: '#334155', borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: '#10283b' },
 });

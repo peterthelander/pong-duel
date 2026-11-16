@@ -11,6 +11,22 @@ export const PADDLE_COLORS = [
   { name: 'White', color: '#f8fafc' },
 ];
 
+export const AVATAR_SKIN_COLORS = [
+  { name: 'Light', color: '#f0d0b5' },
+  { name: 'Peach', color: '#e7bfa5' },
+  { name: 'Tan', color: '#d8a682' },
+  { name: 'Brown', color: '#b87d5c' },
+  { name: 'Deep', color: '#804e38' },
+];
+
+export const AVATAR_HAIR_COLORS = [
+  { name: 'Black', color: '#241a18' },
+  { name: 'Brown', color: '#573326' },
+  { name: 'Blonde', color: '#c49b63' },
+  { name: 'Red', color: '#8b3e2f' },
+  { name: 'Gray', color: '#94a3b8' },
+];
+
 export const OPPONENTS = [
   { name: 'Nell', level: 300, skin: '#eab89b', hair: '#573326', shirt: '#a78bfa' },
   { name: 'Mike', level: 300, skin: '#d29d78', hair: '#282526', shirt: '#60a5fa' },
@@ -88,7 +104,7 @@ export function pointsForOpponent(opponentLevel) {
  */
 export function calculateAiSpeed(opponentLevel, playerLevel, scoreDifference) {
   const scoreBoost = Math.max(-60, Math.min(140, scoreDifference * 22));
-  return Math.max(260, Math.min(850, 270 + opponentLevel * 0.5 + playerLevel * 0.12 + scoreBoost));
+  return Math.max(260, Math.min(850, 265 + opponentLevel * 0.35 + playerLevel * 0.12 + scoreBoost));
 }
 
 /**

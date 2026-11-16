@@ -6,6 +6,7 @@ import { useGameSettings } from './gameSettings';
 import { BACKGROUNDS, calculateAiSpeed, OPPONENTS, pointsForOpponent } from './gameOptions';
 import { paddleCrossing, serveBallY } from './gamePhysics';
 import BallDesign from './BallDesign';
+import OpponentAvatar from './OpponentAvatar';
 
 const PADDLE_WIDTH = 96;
 const PADDLE_HEIGHT = 14;
@@ -29,7 +30,7 @@ export default function App() {
   const lastFrameTimeRef = useRef(0);
   const rallyPausedUntilRef = useRef(0);
   const servePendingRef = useRef(false);
-  const { audioStatus, soundEnabled, soundStyle, paddleColor, ballColor, ballSize: BALL_SIZE, ballPattern, opponent, background, playerName, playerLevel, awardWin, setEnteredGame, playSound: playAudio } = useGameSettings();
+  const { audioStatus, soundEnabled, soundStyle, paddleColor, ballColor, ballSize: BALL_SIZE, ballPattern, opponent, background, playerName, playerAvatar, playerLevel, awardWin, setEnteredGame, playSound: playAudio } = useGameSettings();
   const opponentData = OPPONENTS.find((item) => item.name === opponent);
   const theme = BACKGROUNDS.find((item) => item.name === background);
   const insets = useSafeAreaInsets();
@@ -298,9 +299,17 @@ export default function App() {
 
       <Text style={styles.title}>Pong Duel</Text>
 
-      <View style={styles.scoreboard}>
-        <Text numberOfLines={1} style={styles.scoreLabel}>{opponentData.name}: {topScore}</Text>
-        <Text numberOfLines={1} style={styles.scoreLabel}>{playerName || 'You'}: {bottomScore}</Text>
+      <View style={styles.scoreboard} pointerEvents="none">
+        <View style={styles.scoreEntry}>
+          <OpponentAvatar opponent={opponentData} size={32} />
+          <Text numberOfLines={1} style={styles.scoreName}>{opponentData.name}</Text>
+          <Text numberOfLines={1} style={styles.scoreLabel}> {topScore}</Text>
+        </View>
+        <View style={styles.scoreEntry}>
+          <OpponentAvatar opponent={playerAvatar} size={32} />
+          <Text numberOfLines={1} style={styles.scoreName}>{playerName || 'You'}</Text>
+          <Text numberOfLines={1} style={styles.scoreLabel}> {bottomScore}</Text>
+        </View>
       </View>
       <Text style={styles.goalLabel}>First to {WIN_SCORE}</Text>
       {soundEnabled && audioStatus === 'failed' ? (
@@ -422,20 +431,32 @@ const styles = StyleSheet.create({
     top: 54,
     left: 78,
     right: 28,
-    paddingVertical: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
     borderRadius: 14,
     backgroundColor: 'rgba(15, 23, 42, 0.42)',
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.22)',
     flexDirection: 'row',
-    justifyContent: 'space-around',
+  },
+  scoreEntry: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   scoreLabel: {
     color: '#f8fafc',
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
-    flex: 1,
-    textAlign: 'center',
+    flexShrink: 0,
+  },
+  scoreName: {
+    color: '#f8fafc',
+    fontSize: 15,
+    fontWeight: '700',
+    flexShrink: 1,
+    marginLeft: 2,
   },
   goalLabel: {
     position: 'absolute',

@@ -1,23 +1,29 @@
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-export default function OpponentAvatar({ opponent }) {
+function OpponentAvatar({ opponent, size = 96 }) {
+  const scale = size / 96;
   return (
-    <View accessible={false} style={styles.portrait}>
-      <View style={[styles.hair, opponent.longHair && styles.longHair, { backgroundColor: opponent.hair }]} />
-      <View style={[styles.neck, { backgroundColor: opponent.skin }]} />
-      <View style={[styles.armLeft, { backgroundColor: opponent.skin }]} />
-      <View style={[styles.armRight, { backgroundColor: opponent.skin }]} />
-      <View style={[styles.shirt, { backgroundColor: opponent.shirt }]} />
-      <View style={[styles.face, { backgroundColor: opponent.skin }]}>
-        <View style={[styles.eyeLeft, { backgroundColor: opponent.eyes || '#1e293b' }]} />
-        <View style={[styles.eyeRight, { backgroundColor: opponent.eyes || '#1e293b' }]} />
-        {opponent.lashes ? <><View style={styles.lashLeft} /><View style={styles.lashRight} /></> : null}
-        <View style={styles.smile} />
+    <View accessible={false} pointerEvents="none" style={{ width: size, height: 100 * scale }}>
+      <View style={[styles.portrait, { position: 'absolute', left: (size - 96) / 2, top: (100 * scale - 100) / 2, transform: [{ scale }] }]}>
+        <View style={[styles.hair, opponent.longHair && styles.longHair, { backgroundColor: opponent.hair }]} />
+        <View style={[styles.neck, { backgroundColor: opponent.skin }]} />
+        <View style={[styles.armLeft, { backgroundColor: opponent.skin }]} />
+        <View style={[styles.armRight, { backgroundColor: opponent.skin }]} />
+        <View style={[styles.shirt, { backgroundColor: opponent.shirt }]} />
+        <View style={[styles.face, { backgroundColor: opponent.skin }]}>
+          <View style={[styles.eyeLeft, { backgroundColor: opponent.eyes || '#1e293b' }]} />
+          <View style={[styles.eyeRight, { backgroundColor: opponent.eyes || '#1e293b' }]} />
+          {opponent.lashes ? <><View style={styles.lashLeft} /><View style={styles.lashRight} /></> : null}
+          <View style={styles.smile} />
+        </View>
+        <View style={[styles.fringe, { backgroundColor: opponent.hair }]} />
       </View>
-      <View style={[styles.fringe, { backgroundColor: opponent.hair }]} />
     </View>
   );
 }
+
+export default memo(OpponentAvatar);
 
 const styles = StyleSheet.create({
   portrait: { width: 96, height: 100 },

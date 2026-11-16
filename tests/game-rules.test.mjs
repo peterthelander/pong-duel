@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { BALL_COLORS, BALL_PATTERNS, BALL_SIZES, calculateWinProgress, OPPONENTS } from '../gameOptions.js';
+import { AVATAR_HAIR_COLORS, AVATAR_SKIN_COLORS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, calculateAiSpeed, calculateWinProgress, OPPONENTS, PADDLE_COLORS } from '../gameOptions.js';
 import { defaults, validatePreferences } from '../gamePreferences.js';
 import { paddleCrossing, serveBallY } from '../gamePhysics.js';
 
@@ -25,6 +25,15 @@ test('new and updated opponents are selectable, persistent, and award points for
     assert.equal(matches[0].level, level);
     assert.equal(validatePreferences({ ...defaults, opponent: name }).opponent, name);
     assert.equal(calculateWinProgress(1, 0, matches[0].level).earnedPoints, level / 100);
+  }
+});
+
+test('higher opponent levels make the AI faster, including at a high player level and score lead', () => {
+  let previousSpeed = 0;
+  for (let opponentLevel = 100; opponentLevel <= 1000; opponentLevel += 100) {
+    const speed = calculateAiSpeed(opponentLevel, 1000, 6);
+    assert.ok(speed > previousSpeed, `level ${opponentLevel} should be harder than the previous level`);
+    previousSpeed = speed;
   }
 });
 
@@ -60,6 +69,26 @@ test('ball settings preserve old preferences and validate every supported choice
   assert.throws(() => validatePreferences({ ...defaults, ballSize: 99 }), /invalid/);
   assert.throws(() => validatePreferences({ ...defaults, ballColor: 'invalid' }), /invalid/);
   assert.throws(() => validatePreferences({ ...defaults, ballPattern: 'invalid' }), /invalid/);
+});
+
+test('avatar preferences migrate old saves and preserve every supported appearance', () => {
+  const { playerAvatar, ...legacy } = defaults;
+  assert.deepEqual(validatePreferences({ ...legacy, playerName: 'Player', playerLevel: 42 }), {
+    ...defaults, playerName: 'Player', playerLevel: 42,
+  });
+  for (const [field, colors] of [['hair', AVATAR_HAIR_COLORS], ['skin', AVATAR_SKIN_COLORS], ['shirt', PADDLE_COLORS]]) {
+    for (const { color } of colors) {
+      const avatar = { ...playerAvatar, [field]: color, longHair: true, lashes: true };
+      assert.deepEqual(validatePreferences(JSON.parse(JSON.stringify({ ...defaults, playerAvatar: avatar }))).playerAvatar, avatar);
+    }
+  }
+  for (const avatar of [
+    null, {}, { ...playerAvatar, hair: 'invalid' }, { ...playerAvatar, skin: 'invalid' },
+    { ...playerAvatar, shirt: 'invalid' }, { ...playerAvatar, longHair: 'yes' },
+    { ...playerAvatar, lashes: 1 },
+  ]) {
+    assert.throws(() => validatePreferences({ ...defaults, playerAvatar: avatar }), /invalid/);
+  }
 });
 
 test('ball size changes paddle collision and serve clearance', () => {
