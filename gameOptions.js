@@ -24,6 +24,13 @@ export const OPPONENTS = [
   { name: 'Madison', level: 600, skin: '#f0d0b5', hair: '#a27750', shirt: '#f472b6', eyes: '#3b82f6', lashes: true, longHair: true },
   { name: 'Ruby', level: 700, skin: '#e7bfa5', hair: '#8b3e2f', shirt: '#f87171', eyes: '#59402a', lashes: true, longHair: true },
   { name: 'Benjamin', level: 700, skin: '#c98f6c', hair: '#30221f', shirt: '#60a5fa', eyes: '#3b241b' },
+  { name: 'Nova', level: 800, skin: '#e8b99a', hair: '#4b2925', shirt: '#818cf8', eyes: '#59402a', lashes: true, longHair: true },
+  { name: 'Tori', level: 800, skin: '#d8a682', hair: '#241a18', shirt: '#2dd4bf', eyes: '#3b241b', lashes: true, longHair: true },
+  { name: 'Meg', level: 900, skin: '#f0d0b5', hair: '#a27750', shirt: '#fb7185', eyes: '#3b82f6', lashes: true, longHair: true },
+  { name: 'Dara', level: 900, skin: '#b87d5c', hair: '#30221f', shirt: '#fbbf24', eyes: '#3b241b', lashes: true, longHair: true },
+  { name: 'Ezra', level: 900, skin: '#d29d78', hair: '#493125', shirt: '#34d399', eyes: '#59402a' },
+  { name: 'Emma', level: 1000, skin: '#e7bfa5', hair: '#8b3e2f', shirt: '#c084fc', eyes: '#59402a', lashes: true, longHair: true },
+  { name: 'Victor', level: 1000, skin: '#c98f6c', hair: '#282526', shirt: '#60a5fa', eyes: '#3b241b' },
   { name: 'Rose', level: 100, skin: '#e7b49b', hair: '#653b33', shirt: '#fb7185', longHair: true },
   { name: 'Linnie', level: 100, skin: '#d6a17f', hair: '#30221f', shirt: '#a78bfa', longHair: true },
   { name: 'Jake', level: 200, skin: '#f1c7a6', hair: '#a36836', shirt: '#4ade80' },
@@ -40,6 +47,16 @@ export const BACKGROUNDS = [
 ];
 
 export const SOUND_STYLES = ['Classic', 'Retro', 'Soft'];
+export const BALL_COLORS = [
+  { name: 'Gold', color: '#fbbf24' },
+  ...PADDLE_COLORS,
+];
+export const BALL_SIZES = [
+  { name: 'Small', size: 12 },
+  { name: 'Medium', size: 18 },
+  { name: 'Large', size: 26 },
+];
+export const BALL_PATTERNS = ['Solid', 'Stripe', 'Dots'];
 export const POINTS_PER_LEVEL = 3;
 export const MAX_PLAYER_LEVEL = 1000;
 

@@ -5,11 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGameSettings } from './gameSettings';
 import { BACKGROUNDS, calculateAiSpeed, OPPONENTS, pointsForOpponent } from './gameOptions';
 import { paddleCrossing, serveBallY } from './gamePhysics';
+import BallDesign from './BallDesign';
 
 const PADDLE_WIDTH = 96;
 const PADDLE_HEIGHT = 14;
 const PADDLE_MARGIN = 126;
-const BALL_SIZE = 18;
 const BASE_BALL_SPEED = 360;
 const MAX_BALL_SPEED = 850;
 const WIN_SCORE = 7;
@@ -29,7 +29,7 @@ export default function App() {
   const lastFrameTimeRef = useRef(0);
   const rallyPausedUntilRef = useRef(0);
   const servePendingRef = useRef(false);
-  const { audioStatus, soundEnabled, soundStyle, paddleColor, opponent, background, playerName, playerLevel, awardWin, setEnteredGame, playSound: playAudio } = useGameSettings();
+  const { audioStatus, soundEnabled, soundStyle, paddleColor, ballColor, ballSize: BALL_SIZE, ballPattern, opponent, background, playerName, playerLevel, awardWin, setEnteredGame, playSound: playAudio } = useGameSettings();
   const opponentData = OPPONENTS.find((item) => item.name === opponent);
   const theme = BACKGROUNDS.find((item) => item.name === background);
   const insets = useSafeAreaInsets();
@@ -112,7 +112,7 @@ export default function App() {
     setBottomPaddleX(initialBottom);
     setBottomPaddleY(bottomPaddleYRef.current);
     resetBall(randomServeDirection(), SERVE_DELAY_MS);
-  }, [arena.height, arena.width]);
+  }, [arena.height, arena.width, BALL_SIZE]);
 
   useEffect(() => {
     topScoreRef.current = topScore;
@@ -281,11 +281,9 @@ export default function App() {
       }
       lastFrameTimeRef.current = 0;
     };
-  }, [arena.height, arena.width, awardWin, ballPosition, matchWinner, opponentData.level, playerLevel, playSound]);
+  }, [arena.height, arena.width, awardWin, BALL_SIZE, ballPosition, matchWinner, opponentData.level, playerLevel, playSound]);
 
   const netSegments = Array.from({ length: 12 }, (_, i) => i);
-  const ballSpeed = Math.hypot(ballRef.current.vx, ballRef.current.vy);
-  const ballScale = clamp(ballSpeed / 560, 0.95, 1.2);
 
   return (
     <View
@@ -323,6 +321,10 @@ export default function App() {
             {
               left: ghost.x,
               top: ghost.y,
+              width: BALL_SIZE,
+              height: BALL_SIZE,
+              borderRadius: BALL_SIZE / 2,
+              backgroundColor: ballColor,
               opacity: 0.14 - index * 0.03,
               transform: [{ scale: 1 - index * 0.08 }],
             },
@@ -334,10 +336,16 @@ export default function App() {
         style={[
           styles.ball,
           {
-            transform: [{ translateX: ballPosition.x }, { translateY: ballPosition.y }, { scale: ballScale }],
+            width: BALL_SIZE,
+            height: BALL_SIZE,
+            borderRadius: BALL_SIZE / 2,
+            shadowColor: ballColor,
+            transform: [{ translateX: ballPosition.x }, { translateY: ballPosition.y }],
           },
         ]}
-      />
+      >
+        <BallDesign size={BALL_SIZE} color={ballColor} pattern={ballPattern} />
+      </Animated.View>
 
       <View style={[styles.paddle, styles.aiPaddle, { top: PADDLE_MARGIN, left: topPaddleX }]} />
       <View style={[styles.paddle, styles.playerPaddle, { top: bottomPaddleY, left: bottomPaddleX, backgroundColor: paddleColor, shadowColor: paddleColor }]} />
@@ -502,18 +510,9 @@ const styles = StyleSheet.create({
   homeButtonText: { color: '#67e8f9', fontSize: 14, fontWeight: '800' },
   ballTrail: {
     position: 'absolute',
-    width: BALL_SIZE,
-    height: BALL_SIZE,
-    borderRadius: BALL_SIZE / 2,
-    backgroundColor: '#f59e0b',
   },
   ball: {
     position: 'absolute',
-    width: BALL_SIZE,
-    height: BALL_SIZE,
-    borderRadius: BALL_SIZE / 2,
-    backgroundColor: '#fbbf24',
-    shadowColor: '#f59e0b',
     shadowOpacity: 0.4,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },

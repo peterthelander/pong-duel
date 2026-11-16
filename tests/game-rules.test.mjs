@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { calculateWinProgress, OPPONENTS } from '../gameOptions.js';
+import { BALL_COLORS, BALL_PATTERNS, BALL_SIZES, calculateWinProgress, OPPONENTS } from '../gameOptions.js';
 import { defaults, validatePreferences } from '../gamePreferences.js';
 import { paddleCrossing, serveBallY } from '../gamePhysics.js';
 
@@ -16,7 +16,9 @@ test('new and updated opponents are selectable, persistent, and award points for
   for (const [name, level] of [
     ['Orly', 300], ['Mike', 300], ['Jeremiah', 400], ['Victoria', 400],
     ['Uma', 400], ['Winter', 500], ['John', 500], ['Esther', 600],
-    ['Madison', 600], ['Ruby', 700], ['Benjamin', 700],
+    ['Madison', 600], ['Ruby', 700], ['Benjamin', 700], ['Nova', 800],
+    ['Tori', 800], ['Meg', 900], ['Dara', 900], ['Ezra', 900],
+    ['Emma', 1000], ['Victor', 1000],
   ]) {
     const matches = OPPONENTS.filter((opponent) => opponent.name === name);
     assert.equal(matches.length, 1);
@@ -41,6 +43,32 @@ test('saved progress is converted once without losing preferences or levels', ()
   assert.equal(validatePreferences({ ...legacy, playerLevel: 1000, progressPoints: 4 }).playerLevel, 1000);
   assert.throws(() => validatePreferences({ ...defaults, progressPoints: 3 }), /invalid/);
   assert.throws(() => validatePreferences({ ...defaults, progressRuleVersion: 3 }), /invalid/);
+});
+
+test('ball settings preserve old preferences and validate every supported choice', () => {
+  const { ballColor, ballSize, ballPattern, ...legacy } = defaults;
+  assert.deepEqual(validatePreferences(legacy), defaults);
+  for (const { color } of BALL_COLORS) {
+    assert.equal(validatePreferences({ ...defaults, ballColor: color }).ballColor, color);
+  }
+  for (const { size } of BALL_SIZES) {
+    assert.equal(validatePreferences({ ...defaults, ballSize: size }).ballSize, size);
+  }
+  for (const pattern of BALL_PATTERNS) {
+    assert.equal(validatePreferences({ ...defaults, ballPattern: pattern }).ballPattern, pattern);
+  }
+  assert.throws(() => validatePreferences({ ...defaults, ballSize: 99 }), /invalid/);
+  assert.throws(() => validatePreferences({ ...defaults, ballColor: 'invalid' }), /invalid/);
+  assert.throws(() => validatePreferences({ ...defaults, ballPattern: 'invalid' }), /invalid/);
+});
+
+test('ball size changes paddle collision and serve clearance', () => {
+  const paddle = { x: 100, y: 300 };
+  assert.equal(paddleCrossing(78, 260, 78, 310, 12, paddle, paddle, 96), null);
+  assert.notEqual(paddleCrossing(78, 260, 78, 310, 26, paddle, paddle, 96), null);
+  for (const { size } of BALL_SIZES) {
+    assert.equal(serveBallY(100, 295, size, 100, 300, 96, 14), 300 - size);
+  }
 });
 
 test('a serve starts above an overlapping player paddle', () => {

@@ -73,6 +73,12 @@ export default function HomeScreen() {
             <Text style={styles.optionSubtitle}>Arena design</Text>
           </Pressable>
         </View>
+        <View style={styles.optionsSecondary}>
+          <Pressable accessibilityRole="button" style={styles.option} onPress={() => router.push('/ball')}>
+            <Text style={styles.optionTitle}>Ball</Text>
+            <Text style={styles.optionSubtitle}>Color, size and pattern</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </View>
   );
