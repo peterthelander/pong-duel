@@ -27,6 +27,44 @@ export const AVATAR_HAIR_COLORS = [
   { name: 'Gray', color: '#94a3b8' },
 ];
 
+export const AVATAR_EYE_COLORS = [
+  { name: 'Dark', color: '#1e293b', lashColor: '#241a18' },
+  { name: 'Blue', color: '#3b82f6', lashColor: '#c49b63' },
+  { name: 'Light brown', color: '#59402a', lashColor: '#a36836' },
+  { name: 'Dark brown', color: '#3b241b', lashColor: '#573326' },
+];
+
+/**
+ * @param {string} eyeColor
+ * @returns {string}
+ */
+export function eyelashColorForEyes(eyeColor) {
+  const choice = AVATAR_EYE_COLORS.find((item) => item.color === eyeColor);
+  if (!choice) throw new Error(`Unsupported eye color: ${eyeColor}`);
+  return choice.lashColor;
+}
+
+export const AVATAR_HAIRSTYLES = [
+  { name: 'None', value: 'none' },
+  { name: 'Braid', value: 'braid' },
+  { name: 'Braid in a ponytail', value: 'braidedPonytail' },
+  { name: 'High ponytail', value: 'highPonytail' },
+  { name: 'Low ponytail', value: 'lowPonytail' },
+  { name: 'French braid', value: 'frenchBraid' },
+  { name: 'Pigtails', value: 'pigtails' },
+  { name: 'Hair down', value: 'hairDown' },
+];
+export const AVATAR_MOUTHS = [
+  { name: 'Smile', value: 'smile' },
+  { name: 'Straight', value: 'straight' },
+  { name: 'Open', value: 'open' },
+];
+export const AVATAR_SHOULDERS = [
+  { name: 'Narrow', value: 'narrow' },
+  { name: 'Medium', value: 'medium' },
+  { name: 'Broad', value: 'broad' },
+];
+
 export const OPPONENTS = [
   { name: 'Nell', level: 300, skin: '#eab89b', hair: '#573326', shirt: '#a78bfa' },
   { name: 'Mike', level: 300, skin: '#d29d78', hair: '#282526', shirt: '#60a5fa' },

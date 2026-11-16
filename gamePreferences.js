@@ -1,4 +1,4 @@
-import { applyProgressPoints, AVATAR_HAIR_COLORS, AVATAR_SKIN_COLORS, BACKGROUNDS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, MAX_PLAYER_LEVEL, OPPONENTS, PADDLE_COLORS, POINTS_PER_LEVEL, SOUND_STYLES } from './gameOptions.js';
+import { applyProgressPoints, AVATAR_EYE_COLORS, AVATAR_HAIR_COLORS, AVATAR_HAIRSTYLES, AVATAR_MOUTHS, AVATAR_SHOULDERS, AVATAR_SKIN_COLORS, BACKGROUNDS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, MAX_PLAYER_LEVEL, OPPONENTS, PADDLE_COLORS, POINTS_PER_LEVEL, SOUND_STYLES } from './gameOptions.js';
 
 const PROGRESS_RULE_VERSION = 2;
 
@@ -15,9 +15,15 @@ export const defaults = {
   playerAvatar: {
     skin: AVATAR_SKIN_COLORS[1].color,
     hair: AVATAR_HAIR_COLORS[1].color,
+    eyes: AVATAR_EYE_COLORS[0].color,
     shirt: PADDLE_COLORS[0].color,
     longHair: false,
     lashes: false,
+    hairstyle: 'none',
+    mouth: 'smile',
+    shoulders: 'medium',
+    glasses: false,
+    necklace: false,
   },
   playerLevel: 1,
   progressPoints: 0,
@@ -36,6 +42,18 @@ export function validatePreferences(value) {
       ...(!('playerAvatar' in value) && { playerAvatar: defaults.playerAvatar }),
       ...value,
     };
+    if (value.playerAvatar && typeof value.playerAvatar === 'object' && !Array.isArray(value.playerAvatar)) {
+      const avatar = value.playerAvatar;
+      value.playerAvatar = {
+        ...(!('hairstyle' in avatar) && { hairstyle: defaults.playerAvatar.hairstyle }),
+        ...(!('eyes' in avatar) && { eyes: defaults.playerAvatar.eyes }),
+        ...(!('mouth' in avatar) && { mouth: defaults.playerAvatar.mouth }),
+        ...(!('shoulders' in avatar) && { shoulders: defaults.playerAvatar.shoulders }),
+        ...(!('glasses' in avatar) && { glasses: defaults.playerAvatar.glasses }),
+        ...(!('necklace' in avatar) && { necklace: defaults.playerAvatar.necklace }),
+        ...avatar,
+      };
+    }
   }
   const version = value?.progressRuleVersion ?? 1;
   if (!value || typeof value !== 'object' ||
@@ -52,9 +70,15 @@ export function validatePreferences(value) {
       !value.playerAvatar || typeof value.playerAvatar !== 'object' ||
       !AVATAR_SKIN_COLORS.some((item) => item.color === value.playerAvatar.skin) ||
       !AVATAR_HAIR_COLORS.some((item) => item.color === value.playerAvatar.hair) ||
+      !AVATAR_EYE_COLORS.some((item) => item.color === value.playerAvatar.eyes) ||
       !PADDLE_COLORS.some((item) => item.color === value.playerAvatar.shirt) ||
       typeof value.playerAvatar.longHair !== 'boolean' ||
       typeof value.playerAvatar.lashes !== 'boolean' ||
+      !AVATAR_HAIRSTYLES.some((item) => item.value === value.playerAvatar.hairstyle) ||
+      !AVATAR_MOUTHS.some((item) => item.value === value.playerAvatar.mouth) ||
+      !AVATAR_SHOULDERS.some((item) => item.value === value.playerAvatar.shoulders) ||
+      typeof value.playerAvatar.glasses !== 'boolean' ||
+      typeof value.playerAvatar.necklace !== 'boolean' ||
       !Number.isInteger(value.playerLevel) || value.playerLevel < 1 || value.playerLevel > MAX_PLAYER_LEVEL ||
       !Number.isInteger(value.progressPoints) || value.progressPoints < 0 ||
       value.progressPoints >= (version === 1 ? 5 : POINTS_PER_LEVEL)) {

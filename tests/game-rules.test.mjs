@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { AVATAR_HAIR_COLORS, AVATAR_SKIN_COLORS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, calculateAiSpeed, calculateWinProgress, OPPONENTS, PADDLE_COLORS } from '../gameOptions.js';
+import { AVATAR_EYE_COLORS, AVATAR_HAIR_COLORS, AVATAR_HAIRSTYLES, AVATAR_MOUTHS, AVATAR_SHOULDERS, AVATAR_SKIN_COLORS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, calculateAiSpeed, calculateWinProgress, eyelashColorForEyes, OPPONENTS, PADDLE_COLORS } from '../gameOptions.js';
 import { defaults, validatePreferences } from '../gamePreferences.js';
 import { paddleCrossing, serveBallY } from '../gamePhysics.js';
 
@@ -89,6 +89,51 @@ test('avatar preferences migrate old saves and preserve every supported appearan
   ]) {
     assert.throws(() => validatePreferences({ ...defaults, playerAvatar: avatar }), /invalid/);
   }
+});
+
+test('new avatar choices migrate existing portraits, round-trip and reject invalid values', () => {
+  const { hairstyle, mouth, shoulders, glasses, necklace, ...oldAvatar } = defaults.playerAvatar;
+  const oldPreferences = { ...defaults, playerName: 'Player', playerLevel: 42, playerAvatar: { ...oldAvatar, longHair: true, lashes: true } };
+  const migrated = validatePreferences(oldPreferences);
+  assert.deepEqual(migrated.playerAvatar, { ...defaults.playerAvatar, ...oldAvatar, longHair: true, lashes: true });
+  assert.equal(migrated.playerLevel, 42);
+  assert.equal(migrated.playerName, 'Player');
+  assert.deepEqual(validatePreferences(migrated), migrated);
+
+  for (const [field, options] of [['hairstyle', AVATAR_HAIRSTYLES], ['mouth', AVATAR_MOUTHS], ['shoulders', AVATAR_SHOULDERS]]) {
+    for (const { value } of options) {
+      const avatar = { ...migrated.playerAvatar, [field]: value, glasses: true, necklace: true };
+      assert.deepEqual(validatePreferences(JSON.parse(JSON.stringify({ ...defaults, playerAvatar: avatar }))).playerAvatar, avatar);
+    }
+    assert.throws(() => validatePreferences({ ...defaults, playerAvatar: { ...defaults.playerAvatar, [field]: 'invalid' } }), /invalid/);
+  }
+  for (const field of ['glasses', 'necklace']) {
+    assert.throws(() => validatePreferences({ ...defaults, playerAvatar: { ...defaults.playerAvatar, [field]: null } }), /invalid/);
+  }
+  assert.deepEqual(AVATAR_HAIRSTYLES.map(({ value }) => value), [
+    'none', 'braid', 'braidedPonytail', 'highPonytail', 'lowPonytail', 'frenchBraid', 'pigtails', 'hairDown',
+  ]);
+});
+
+test('eye color is saved and determines eyelash color for players and opponents', () => {
+  const { eyes, ...oldAvatar } = defaults.playerAvatar;
+  assert.deepEqual(validatePreferences({ ...defaults, playerAvatar: oldAvatar }).playerAvatar, defaults.playerAvatar);
+  for (const [eyeColor, lashColor] of [
+    ['#1e293b', '#241a18'],
+    ['#3b82f6', '#c49b63'],
+    ['#59402a', '#a36836'],
+    ['#3b241b', '#573326'],
+  ]) {
+    assert.ok(AVATAR_EYE_COLORS.some((choice) => choice.color === eyeColor));
+    assert.equal(eyelashColorForEyes(eyeColor), lashColor);
+    const saved = JSON.parse(JSON.stringify({ ...defaults, playerAvatar: { ...defaults.playerAvatar, eyes: eyeColor, lashes: true } }));
+    assert.equal(validatePreferences(saved).playerAvatar.eyes, eyeColor);
+  }
+  for (const opponent of OPPONENTS) {
+    assert.doesNotThrow(() => eyelashColorForEyes(opponent.eyes ?? eyes));
+  }
+  assert.throws(() => validatePreferences({ ...defaults, playerAvatar: { ...defaults.playerAvatar, eyes: 'invalid' } }), /invalid/);
+  assert.throws(() => eyelashColorForEyes('invalid'), /Unsupported eye color/);
 });
 
 test('ball size changes paddle collision and serve clearance', () => {

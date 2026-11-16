@@ -4,7 +4,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OpponentAvatar from '../../OpponentAvatar';
 import { useGameSettings } from '../../gameSettings';
-import { AVATAR_HAIR_COLORS, AVATAR_SKIN_COLORS, PADDLE_COLORS, POINTS_PER_LEVEL } from '../../gameOptions';
+import { AVATAR_EYE_COLORS, AVATAR_HAIR_COLORS, AVATAR_HAIRSTYLES, AVATAR_MOUTHS, AVATAR_SHOULDERS, AVATAR_SKIN_COLORS, PADDLE_COLORS, POINTS_PER_LEVEL } from '../../gameOptions';
 import { menuStyles as styles } from '../../menuStyles';
 
 function AppearanceOptions({ label, options, value, onChange }) {
@@ -56,10 +56,17 @@ export default function ProfileScreen() {
         <Text style={styles.inputLabel}>Your appearance</Text>
         <View style={styles.avatarPreview}><OpponentAvatar opponent={avatar} /></View>
         <AppearanceOptions label="Hair length" options={[{ name: 'Short', value: false }, { name: 'Long', value: true }]} value={avatar.longHair} onChange={(longHair) => setAvatar((current) => ({ ...current, longHair }))} />
+        <AppearanceOptions label="Hairstyle" options={AVATAR_HAIRSTYLES} value={avatar.hairstyle} onChange={(hairstyle) => setAvatar((current) => ({ ...current, hairstyle }))} />
+        <Text style={styles.hint}>Hair length applies when hairstyle is None. Hair down is always long.</Text>
         <AppearanceOptions label="Hair color" options={AVATAR_HAIR_COLORS.map(({ name, color }) => ({ name, color, value: color }))} value={avatar.hair} onChange={(hair) => setAvatar((current) => ({ ...current, hair }))} />
         <AppearanceOptions label="Skin color" options={AVATAR_SKIN_COLORS.map(({ name, color }) => ({ name, color, value: color }))} value={avatar.skin} onChange={(skin) => setAvatar((current) => ({ ...current, skin }))} />
         <AppearanceOptions label="Shirt color" options={PADDLE_COLORS.map(({ name, color }) => ({ name, color, value: color }))} value={avatar.shirt} onChange={(shirt) => setAvatar((current) => ({ ...current, shirt }))} />
+        <AppearanceOptions label="Eye color" options={AVATAR_EYE_COLORS.map(({ name, color }) => ({ name, color, value: color }))} value={avatar.eyes} onChange={(eyes) => setAvatar((current) => ({ ...current, eyes }))} />
         <AppearanceOptions label="Eyelashes" options={[{ name: 'No', value: false }, { name: 'Yes', value: true }]} value={avatar.lashes} onChange={(lashes) => setAvatar((current) => ({ ...current, lashes }))} />
+        <AppearanceOptions label="Mouth" options={AVATAR_MOUTHS} value={avatar.mouth} onChange={(mouth) => setAvatar((current) => ({ ...current, mouth }))} />
+        <AppearanceOptions label="Shoulders" options={AVATAR_SHOULDERS} value={avatar.shoulders} onChange={(shoulders) => setAvatar((current) => ({ ...current, shoulders }))} />
+        <AppearanceOptions label="Glasses" options={[{ name: 'No', value: false }, { name: 'Yes', value: true }]} value={avatar.glasses} onChange={(glasses) => setAvatar((current) => ({ ...current, glasses }))} />
+        <AppearanceOptions label="Necklace" options={[{ name: 'No', value: false }, { name: 'Yes', value: true }]} value={avatar.necklace} onChange={(necklace) => setAvatar((current) => ({ ...current, necklace }))} />
         {storageError ? <Text style={styles.warning}>{storageError}</Text> : null}
       </View>
       <Pressable accessibilityRole="button" style={styles.playButton} onPress={save}><Text style={styles.playButtonText}>Save</Text></Pressable>

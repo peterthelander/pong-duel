@@ -33,7 +33,10 @@ Use your phone's browser if GitHub's in-app browser has trouble opening it.
   Ball size changes its collision size during play.
 - Use **Background** to change the arena design. Use **Profile** to edit your
   name, customize your illustrated portrait, and see your level and progress.
-  Choose your hair length and color, skin color, shirt color, and eyelashes;
+  Choose your hair length, color and hairstyle, skin, shirt and eye colors,
+  eyelashes, mouth, shoulder width, glasses, and necklace. Eyelash color follows
+  eye color: blonde for blue eyes and matching light or dark brown for brown eyes;
+  hair length applies to the None hairstyle, while Hair down is always long.
   Save applies the changes and Cancel discards them. Small portraits of you and
   your opponent appear alongside the match scores. New players start at level 1; existing
   saved levels are retained. Winning earns one progress point per 100 opponent
