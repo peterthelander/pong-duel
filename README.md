@@ -30,8 +30,10 @@ Use your phone's browser if GitHub's in-app browser has trouble opening it.
   level 900; Emma and Victor are level 1000. Each 100-level tier makes the AI
   faster, with level 100 the easiest and level 1000 the hardest, up to its speed
   limit.
-- Use **Settings** to turn sound effects on or off and choose Classic, Retro, or
-  Soft sounds; use **Characters** to choose a paddle color.
+- Use **Settings** to turn sound effects on or off and choose from twelve sound
+  styles: Classic, Retro, Soft, Arcade, Chime, Bubble, Laser, Bell, Pop, Drum,
+  Cosmic, and Sparkle. Tap a selected style again to hear it.
+  Use **Characters** to choose a paddle color.
 - Use **Ball** on the home screen to choose its color, size, and pattern.
   Five sizes range from extra small to extra large and change collision size
   during play. Patterns include stripes, dots, diagonal, cross, ring, bullseye,

@@ -124,7 +124,7 @@ export const BACKGROUND_POSITIONS = [
   { name: 'Bottom right', x: 85, y: 80 },
 ];
 
-export const SOUND_STYLES = ['Classic', 'Retro', 'Soft'];
+export const SOUND_STYLES = ['Classic', 'Retro', 'Soft', 'Arcade', 'Chime', 'Bubble', 'Laser', 'Bell', 'Pop', 'Drum', 'Cosmic', 'Sparkle'];
 export const BALL_COLORS = [
   { name: 'Gold', color: '#fbbf24' },
   ...PADDLE_COLORS,

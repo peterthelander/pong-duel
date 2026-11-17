@@ -13,7 +13,7 @@ export function GameSettingsProvider({ children }) {
   const [storageError, setStorageError] = useState('');
   const [enteredGame, setEnteredGame] = useState(false);
   const writeQueue = useRef(Promise.resolve());
-  const audio = useGameSounds();
+  const audio = useGameSounds(preferences.soundStyle);
 
   useEffect(() => {
     let active = true;

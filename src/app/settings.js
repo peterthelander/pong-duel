@@ -6,7 +6,7 @@ import { menuStyles as styles } from '../../menuStyles';
 import { SOUND_STYLES } from '../../gameOptions';
 
 export default function SettingsScreen() {
-  const { soundEnabled, setSoundEnabled, soundStyle, updatePreference, storageError } = useGameSettings();
+  const { soundEnabled, setSoundEnabled, soundStyle, updatePreference, audioStatus, startAudio, playSound, storageError } = useGameSettings();
   const insets = useSafeAreaInsets();
   return (
     <ScrollView style={[styles.screen, { paddingTop: insets.top }]} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}>
@@ -22,14 +22,24 @@ export default function SettingsScreen() {
           />
         </View>
         <Text style={styles.inputLabel}>Sound style</Text>
+        <Text style={styles.hint}>{soundEnabled ? 'Tap a selected style again to hear it.' : 'Turn on sound effects to hear a style.'}</Text>
         <View style={styles.colors}>
           {SOUND_STYLES.map((style) => (
-            <Pressable key={style} accessibilityRole="button" accessibilityLabel={`${style} sounds${soundStyle === style ? ', selected' : ''}`} onPress={() => updatePreference('soundStyle', style)} style={[styles.soundOption, soundStyle === style && styles.colorSelected]}>
+            <Pressable key={style} accessibilityRole="button" accessibilityLabel={`${style} sounds${soundStyle === style ? ', selected' : ''}`} onPress={() => {
+              if (soundStyle !== style) {
+                updatePreference('soundStyle', style);
+              } else if (soundEnabled && audioStatus === 'ready') {
+                startAudio();
+                playSound('paddle', style);
+              }
+            }} style={[styles.soundOption, soundStyle === style && styles.colorSelected]}>
               <Text style={styles.colorName}>{style}</Text>
               <Text style={styles.selectedLabel}>{soundStyle === style ? 'Selected' : ' '}</Text>
             </Pressable>
           ))}
         </View>
+        {soundEnabled && audioStatus === 'loading' ? <Text style={styles.hint}>Loading sounds...</Text> : null}
+        {soundEnabled && audioStatus === 'failed' ? <Text style={styles.warning}>Sound unavailable</Text> : null}
         {storageError ? <Text style={styles.warning}>{storageError}</Text> : null}
         <Pressable accessibilityRole="button" style={styles.backButton} onPress={() => router.replace('/')}>
           <Text style={styles.backButtonText}>Home</Text>
