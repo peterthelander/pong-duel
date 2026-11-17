@@ -1,4 +1,4 @@
-import { applyProgressPoints, AVATAR_EYE_COLORS, AVATAR_HAIR_COLORS, AVATAR_HAIRSTYLES, AVATAR_MOUTHS, AVATAR_SHOULDERS, AVATAR_SKIN_COLORS, BACKGROUNDS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, calculateWinProgress, MAX_PLAYER_LEVEL, OPPONENTS, PADDLE_COLORS, POINTS_PER_LEVEL, SOUND_STYLES } from './gameOptions.js';
+import { applyProgressPoints, AVATAR_EYE_COLORS, AVATAR_HAIR_COLORS, AVATAR_HAIRSTYLES, AVATAR_MOUTHS, AVATAR_SHOULDERS, AVATAR_SKIN_COLORS, BACKGROUNDS, BACKGROUND_POSITIONS, BACKGROUND_SHAPES, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, calculateWinProgress, MAX_PLAYER_LEVEL, OPPONENTS, PADDLE_COLORS, POINTS_PER_LEVEL, SOUND_STYLES } from './gameOptions.js';
 
 const PROGRESS_RULE_VERSION = 2;
 
@@ -7,10 +7,21 @@ export const defaults = {
   soundStyle: 'Classic',
   paddleColor: PADDLE_COLORS[0].color,
   ballColor: BALL_COLORS[0].color,
-  ballSize: BALL_SIZES[1].size,
+  ballSize: BALL_SIZES[2].size,
   ballPattern: BALL_PATTERNS[0],
   opponent: 'Nell',
   background: 'Night',
+  backgroundDecorations: [
+    { shape: 'none', color: PADDLE_COLORS[1].color, position: 'Top left' },
+    { shape: 'none', color: PADDLE_COLORS[6].color, position: 'Bottom right' },
+    { shape: 'none', color: PADDLE_COLORS[4].color, position: 'Top right' },
+    { shape: 'none', color: PADDLE_COLORS[7].color, position: 'Bottom left' },
+    { shape: 'none', color: PADDLE_COLORS[5].color, position: 'Center' },
+    { shape: 'none', color: PADDLE_COLORS[0].color, position: 'Top center' },
+    { shape: 'none', color: PADDLE_COLORS[2].color, position: 'Middle left' },
+    { shape: 'none', color: PADDLE_COLORS[3].color, position: 'Middle right' },
+    { shape: 'none', color: PADDLE_COLORS[8].color, position: 'Bottom center' },
+  ],
   playerName: '',
   playerAvatar: {
     skin: AVATAR_SKIN_COLORS[1].color,
@@ -42,6 +53,7 @@ export function validatePreferences(value) {
       ...(!('ballPattern' in value) && { ballPattern: defaults.ballPattern }),
       ...(!('playerAvatar' in value) && { playerAvatar: defaults.playerAvatar }),
       ...(!('opponentWins' in value) && { opponentWins: defaults.opponentWins }),
+      ...(!('backgroundDecorations' in value) && { backgroundDecorations: defaults.backgroundDecorations }),
       ...value,
     };
     if (value.playerAvatar && typeof value.playerAvatar === 'object' && !Array.isArray(value.playerAvatar)) {
@@ -56,6 +68,12 @@ export function validatePreferences(value) {
         ...avatar,
       };
     }
+    if (Array.isArray(value.backgroundDecorations) && [2, 5].includes(value.backgroundDecorations.length)) {
+      value.backgroundDecorations = [
+        ...value.backgroundDecorations,
+        ...defaults.backgroundDecorations.slice(value.backgroundDecorations.length),
+      ];
+    }
   }
   const version = value?.progressRuleVersion ?? 1;
   if (!value || typeof value !== 'object' ||
@@ -68,6 +86,11 @@ export function validatePreferences(value) {
       !BALL_PATTERNS.includes(value.ballPattern) ||
       !OPPONENTS.some((item) => item.name === value.opponent) ||
       !BACKGROUNDS.some((item) => item.name === value.background) ||
+      !Array.isArray(value.backgroundDecorations) || value.backgroundDecorations.length !== defaults.backgroundDecorations.length ||
+      !value.backgroundDecorations.every((item) => item && typeof item === 'object' &&
+        BACKGROUND_SHAPES.some((shape) => shape.value === item.shape) &&
+        PADDLE_COLORS.some((color) => color.color === item.color) &&
+        BACKGROUND_POSITIONS.some((position) => position.name === item.position)) ||
       typeof value.playerName !== 'string' || value.playerName.length > 30 ||
       !value.playerAvatar || typeof value.playerAvatar !== 'object' ||
       !AVATAR_SKIN_COLORS.some((item) => item.color === value.playerAvatar.skin) ||

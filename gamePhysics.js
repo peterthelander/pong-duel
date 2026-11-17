@@ -28,6 +28,19 @@ export function paddleCrossing(previousX, previousY, ballX, ballY, ballSize, pre
 }
 
 /**
+ * @param {number} ballVelocityY
+ * @param {number} previousPaddleY
+ * @param {number} paddleY
+ * @param {number} elapsedSeconds
+ * @returns {number}
+ */
+export function playerBounceVelocity(ballVelocityY, previousPaddleY, paddleY, elapsedSeconds) {
+  const upwardSpeed = elapsedSeconds > 0 ? Math.max(0, (previousPaddleY - paddleY) / elapsedSeconds) : 0;
+  const boost = Math.min(350, upwardSpeed * 0.7);
+  return -(Math.abs(ballVelocityY) * 1.03 + boost);
+}
+
+/**
  * @param {number} ballX
  * @param {number} ballY
  * @param {number} ballSize

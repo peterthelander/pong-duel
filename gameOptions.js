@@ -98,6 +98,30 @@ export const BACKGROUNDS = [
   { name: 'Night', color: '#071524', left: 'rgba(14, 116, 144, 0.18)', right: 'rgba(251, 146, 60, 0.14)' },
   { name: 'Sunset', color: '#33172b', left: 'rgba(251, 146, 60, 0.22)', right: 'rgba(244, 114, 182, 0.22)' },
   { name: 'Forest', color: '#09231e', left: 'rgba(74, 222, 128, 0.18)', right: 'rgba(45, 212, 191, 0.18)' },
+  { name: 'Ocean', color: '#09243c', left: 'rgba(56, 189, 248, 0.22)', right: 'rgba(45, 212, 191, 0.18)' },
+  { name: 'Lavender', color: '#241a3e', left: 'rgba(192, 132, 252, 0.22)', right: 'rgba(129, 140, 248, 0.18)' },
+  { name: 'Rose', color: '#381b2b', left: 'rgba(244, 114, 182, 0.22)', right: 'rgba(251, 113, 133, 0.18)' },
+  { name: 'Desert', color: '#382719', left: 'rgba(251, 191, 36, 0.20)', right: 'rgba(251, 146, 60, 0.18)' },
+  { name: 'Midnight', color: '#171b2c', left: 'rgba(148, 163, 184, 0.18)', right: 'rgba(96, 165, 250, 0.15)' },
+];
+
+export const BACKGROUND_SHAPES = [
+  { name: 'None', value: 'none' },
+  { name: 'Heart', value: 'heart' },
+  { name: 'Diamond', value: 'diamond' },
+  { name: 'Circle', value: 'circle' },
+  { name: 'Star', value: 'star' },
+];
+export const BACKGROUND_POSITIONS = [
+  { name: 'Top left', x: 15, y: 20 },
+  { name: 'Top center', x: 50, y: 20 },
+  { name: 'Top right', x: 85, y: 20 },
+  { name: 'Middle left', x: 15, y: 50 },
+  { name: 'Center', x: 50, y: 50 },
+  { name: 'Middle right', x: 85, y: 50 },
+  { name: 'Bottom left', x: 15, y: 80 },
+  { name: 'Bottom center', x: 50, y: 80 },
+  { name: 'Bottom right', x: 85, y: 80 },
 ];
 
 export const SOUND_STYLES = ['Classic', 'Retro', 'Soft'];
@@ -106,11 +130,13 @@ export const BALL_COLORS = [
   ...PADDLE_COLORS,
 ];
 export const BALL_SIZES = [
+  { name: 'Extra small', size: 8 },
   { name: 'Small', size: 12 },
   { name: 'Medium', size: 18 },
   { name: 'Large', size: 26 },
+  { name: 'Extra large', size: 34 },
 ];
-export const BALL_PATTERNS = ['Solid', 'Stripe', 'Dots'];
+export const BALL_PATTERNS = ['Solid', 'Stripe', 'Dots', 'Double stripe', 'Diagonal', 'Cross', 'Ring', 'Bullseye', 'Half', 'Checker'];
 export const POINTS_PER_LEVEL = 3;
 export const MAX_PLAYER_LEVEL = 1000;
 

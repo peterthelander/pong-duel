@@ -4,9 +4,10 @@ import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGameSettings } from './gameSettings';
 import { BACKGROUNDS, calculateAiSpeed, OPPONENTS, pointsForOpponent } from './gameOptions';
-import { paddleCrossing, serveBallY } from './gamePhysics';
+import { paddleCrossing, playerBounceVelocity, serveBallY } from './gamePhysics';
 import BallDesign from './BallDesign';
 import OpponentAvatar from './OpponentAvatar';
+import BackgroundDecorations from './BackgroundDecorations';
 
 const PADDLE_WIDTH = 96;
 const PADDLE_HEIGHT = 14;
@@ -30,7 +31,7 @@ export default function App() {
   const lastFrameTimeRef = useRef(0);
   const rallyPausedUntilRef = useRef(0);
   const servePendingRef = useRef(false);
-  const { audioStatus, soundEnabled, soundStyle, paddleColor, ballColor, ballSize: BALL_SIZE, ballPattern, opponent, background, playerName, playerAvatar, playerLevel, awardWin, setEnteredGame, playSound: playAudio } = useGameSettings();
+  const { audioStatus, soundEnabled, soundStyle, paddleColor, ballColor, ballSize: BALL_SIZE, ballPattern, opponent, background, backgroundDecorations, playerName, playerAvatar, playerLevel, awardWin, setEnteredGame, playSound: playAudio } = useGameSettings();
   const opponentData = OPPONENTS.find((item) => item.name === opponent);
   const theme = BACKGROUNDS.find((item) => item.name === background);
   const insets = useSafeAreaInsets();
@@ -132,7 +133,8 @@ export default function App() {
         lastFrameTimeRef.current = now;
       }
 
-      const dt = Math.min((now - lastFrameTimeRef.current) / 1000, 0.033);
+      const elapsedSeconds = Math.max(0, (now - lastFrameTimeRef.current) / 1000);
+      const dt = Math.min(elapsedSeconds, 0.033);
       lastFrameTimeRef.current = now;
       const previousPaddle = previousBottomPaddleRef.current;
       const paddle = { x: bottomPaddleXRef.current, y: bottomPaddleYRef.current };
@@ -218,7 +220,7 @@ export default function App() {
       );
       if (ball.vy > 0 && crossing !== null) {
         ball.y = paddle.y - BALL_SIZE;
-        ball.vy = -Math.abs(ball.vy) * 1.03;
+        ball.vy = playerBounceVelocity(ball.vy, previousPaddle.y, paddle.y, elapsedSeconds);
         const offset =
           (crossing.ballX + BALL_SIZE / 2 - (crossing.paddleX + PADDLE_WIDTH / 2)) / (PADDLE_WIDTH / 2);
         ball.vx += offset * 270;
@@ -296,6 +298,7 @@ export default function App() {
     >
       <View style={[styles.bgOrbLeft, { backgroundColor: theme.left }]} />
       <View style={[styles.bgOrbRight, { backgroundColor: theme.right }]} />
+      <BackgroundDecorations decorations={backgroundDecorations} />
 
       <Text style={styles.title}>Pong Duel</Text>
 

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { AVATAR_EYE_COLORS, AVATAR_HAIR_COLORS, AVATAR_HAIRSTYLES, AVATAR_MOUTHS, AVATAR_SHOULDERS, AVATAR_SKIN_COLORS, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, calculateAiSpeed, calculateWinProgress, eyelashColorForEyes, OPPONENTS, PADDLE_COLORS } from '../gameOptions.js';
+import { AVATAR_EYE_COLORS, AVATAR_HAIR_COLORS, AVATAR_HAIRSTYLES, AVATAR_MOUTHS, AVATAR_SHOULDERS, AVATAR_SKIN_COLORS, BACKGROUNDS, BACKGROUND_POSITIONS, BACKGROUND_SHAPES, BALL_COLORS, BALL_PATTERNS, BALL_SIZES, calculateAiSpeed, calculateWinProgress, eyelashColorForEyes, OPPONENTS, PADDLE_COLORS } from '../gameOptions.js';
 import { defaults, recordOpponentWin, validatePreferences } from '../gamePreferences.js';
-import { paddleCrossing, serveBallY } from '../gamePhysics.js';
+import { paddleCrossing, playerBounceVelocity, serveBallY } from '../gamePhysics.js';
 
 test('wins award one point per 100 opponent levels and advance every three points', () => {
   assert.deepEqual(calculateWinProgress(1, 0, 100), { earnedPoints: 1, playerLevel: 1, progressPoints: 1 });
@@ -85,6 +85,11 @@ test('saved progress is converted once without losing preferences or levels', ()
 test('ball settings preserve old preferences and validate every supported choice', () => {
   const { ballColor, ballSize, ballPattern, ...legacy } = defaults;
   assert.deepEqual(validatePreferences(legacy), defaults);
+  assert.equal(defaults.ballSize, 18);
+  assert.deepEqual(BALL_SIZES.map(({ name, size }) => [name, size]), [
+    ['Extra small', 8], ['Small', 12], ['Medium', 18], ['Large', 26], ['Extra large', 34],
+  ]);
+  assert.deepEqual(BALL_PATTERNS, ['Solid', 'Stripe', 'Dots', 'Double stripe', 'Diagonal', 'Cross', 'Ring', 'Bullseye', 'Half', 'Checker']);
   for (const { color } of BALL_COLORS) {
     assert.equal(validatePreferences({ ...defaults, ballColor: color }).ballColor, color);
   }
@@ -97,6 +102,61 @@ test('ball settings preserve old preferences and validate every supported choice
   assert.throws(() => validatePreferences({ ...defaults, ballSize: 99 }), /invalid/);
   assert.throws(() => validatePreferences({ ...defaults, ballColor: 'invalid' }), /invalid/);
   assert.throws(() => validatePreferences({ ...defaults, ballPattern: 'invalid' }), /invalid/);
+});
+
+test('background decorations migrate and persist supported shapes, colors, and positions', () => {
+  const { backgroundDecorations, ...legacy } = defaults;
+  assert.deepEqual(validatePreferences({ ...legacy, playerLevel: 42 }), { ...defaults, playerLevel: 42 });
+  assert.equal(backgroundDecorations.length, 9);
+  assert.equal(new Set(backgroundDecorations.map(({ position }) => position)).size, 9);
+  const previous = [
+    { shape: 'heart', color: PADDLE_COLORS[0].color, position: 'Center' },
+    { shape: 'star', color: PADDLE_COLORS[1].color, position: 'Top right' },
+  ];
+  const migrated = validatePreferences({ ...defaults, backgroundDecorations: previous });
+  assert.deepEqual(migrated.backgroundDecorations, [...previous, ...backgroundDecorations.slice(2)]);
+  assert.deepEqual(validatePreferences(migrated), migrated);
+  const previousFive = [
+    ...previous,
+    { shape: 'circle', color: PADDLE_COLORS[2].color, position: 'Middle left' },
+    { shape: 'diamond', color: PADDLE_COLORS[3].color, position: 'Bottom center' },
+    { shape: 'star', color: PADDLE_COLORS[4].color, position: 'Top left' },
+  ];
+  const migratedFive = validatePreferences({ ...defaults, backgroundDecorations: previousFive });
+  assert.deepEqual(migratedFive.backgroundDecorations, [...previousFive, ...backgroundDecorations.slice(5)]);
+  assert.deepEqual(validatePreferences(JSON.parse(JSON.stringify(migratedFive))), migratedFive);
+  const allDecorations = backgroundDecorations.map((_, index) => ({
+    shape: BACKGROUND_SHAPES[1 + index % (BACKGROUND_SHAPES.length - 1)].value,
+    color: PADDLE_COLORS[index].color,
+    position: BACKGROUND_POSITIONS[index].name,
+  }));
+  assert.deepEqual(validatePreferences(JSON.parse(JSON.stringify({ ...defaults, backgroundDecorations: allDecorations }))).backgroundDecorations, allDecorations);
+  for (const { name } of BACKGROUNDS) {
+    assert.equal(validatePreferences({ ...defaults, background: name }).background, name);
+  }
+  assert.deepEqual(BACKGROUND_SHAPES.map(({ value }) => value), ['none', 'heart', 'diamond', 'circle', 'star']);
+  assert.equal(BACKGROUND_POSITIONS.length, 9);
+  for (const shape of BACKGROUND_SHAPES) {
+    for (const position of BACKGROUND_POSITIONS) {
+      for (const color of PADDLE_COLORS) {
+        const decorations = [{ shape: shape.value, color: color.color, position: position.name }, ...backgroundDecorations.slice(1)];
+        const saved = JSON.parse(JSON.stringify({ ...defaults, backgroundDecorations: decorations }));
+        assert.deepEqual(validatePreferences(saved).backgroundDecorations, decorations);
+      }
+    }
+  }
+  for (const decorations of [
+    null, [], [backgroundDecorations[0]], [null, backgroundDecorations[1]],
+    backgroundDecorations.slice(0, 3), backgroundDecorations.slice(0, 4),
+    backgroundDecorations.slice(0, 6), backgroundDecorations.slice(0, 7), backgroundDecorations.slice(0, 8),
+    [{ ...previousFive[0], shape: 'invalid' }, ...previousFive.slice(1)],
+    [...backgroundDecorations, backgroundDecorations[0]],
+    [{ ...backgroundDecorations[0], shape: 'invalid' }, ...backgroundDecorations.slice(1)],
+    [{ ...backgroundDecorations[0], color: 'invalid' }, ...backgroundDecorations.slice(1)],
+    [{ ...backgroundDecorations[0], position: 'invalid' }, ...backgroundDecorations.slice(1)],
+  ]) {
+    assert.throws(() => validatePreferences({ ...defaults, backgroundDecorations: decorations }), /invalid/);
+  }
 });
 
 test('avatar preferences migrate old saves and preserve every supported appearance', () => {
@@ -194,6 +254,17 @@ test('a rising paddle catches a descending ball when their paths cross between f
   );
   assert.equal(paddleCrossing(40, 270, 44, 280, 18, { x: 100, y: 320 }, { x: 100, y: 290 }, 96), null);
   assert.equal(paddleCrossing(40, 270, 44, 280, 18, { x: 30, y: 300 }, { x: 30, y: 320 }, 96), null);
+});
+
+test('hitting while moving the paddle upward adds a capped, frame-rate-independent speed boost', () => {
+  const stationary = playerBounceVelocity(360, 300, 300, 0.02);
+  assert.equal(stationary, -370.8);
+  assert.equal(playerBounceVelocity(360, 300, 310, 0.02), stationary);
+  assert.equal(playerBounceVelocity(360, 300, 290, 0), stationary);
+  const moving = playerBounceVelocity(360, 300, 290, 0.02);
+  assert.ok(Math.abs(moving) >= Math.abs(stationary) + 300);
+  assert.equal(moving, playerBounceVelocity(360, 300, 295, 0.01));
+  assert.equal(playerBounceVelocity(360, 300, 200, 0.02), stationary - 350);
 });
 
 test('horizontal paddle position is evaluated at the crossing, not the end of the frame', () => {

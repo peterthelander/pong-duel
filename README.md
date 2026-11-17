@@ -16,7 +16,8 @@ Use your phone's browser if GitHub's in-app browser has trouble opening it.
 ## Controls
 
 - Drag or tap in the lower half of the screen to move your paddle horizontally
-  and vertically.
+  and vertically. Move the paddle upward as it hits the ball to give the return
+  extra speed, up to the game's speed limit.
 - Play against an AI-controlled upper paddle.
 - The first player to score seven points wins. Tap the result screen to restart.
 - Wall hits, paddle hits, and goals have bundled sound effects.
@@ -32,8 +33,16 @@ Use your phone's browser if GitHub's in-app browser has trouble opening it.
 - Use **Settings** to turn sound effects on or off and choose Classic, Retro, or
   Soft sounds; use **Characters** to choose a paddle color.
 - Use **Ball** on the home screen to choose its color, size, and pattern.
-  Ball size changes its collision size during play.
-- Use **Background** to change the arena design. Use **Profile** to edit your
+  Five sizes range from extra small to extra large and change collision size
+  during play. Patterns include stripes, dots, diagonal, cross, ring, bullseye,
+  half, and checker designs.
+- Use **Background** to choose Night, Sunset, Forest, Ocean, Lavender, Rose,
+  Desert, or Midnight and place up to nine
+  optional hearts, diamonds, circles, or stars. Each decoration can use cyan,
+  pink, lime, orange, red, purple, blue, yellow, green, or white, and can be
+  placed in any of nine positions. Decorations appear on the home screen and
+  in the arena, and do not affect play.
+  Use **Profile** to edit your
   name, customize your illustrated portrait, and see your level and progress.
   Choose your hair length, color and hairstyle, skin, shirt and eye colors,
   eyelashes, mouth, shoulder width, glasses, and necklace. Eyelash color follows

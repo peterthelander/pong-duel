@@ -47,5 +47,8 @@ export const menuStyles = StyleSheet.create({
   appearanceSwatch: { width: 20, height: 20, borderRadius: 10, borderWidth: 1, borderColor: '#94a3b8' },
   appearanceOptionText: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
   backgroundSample: { width: 70, height: 30, borderWidth: 4, borderRadius: 8 },
+  backgroundPreview: { width: 200, height: 260, borderRadius: 16, overflow: 'hidden' },
+  backgroundPositionGrid: { width: '100%', maxWidth: 360, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6 },
+  backgroundPositionOption: { width: '31%', justifyContent: 'center', paddingHorizontal: 4 },
   soundOption: { width: 100, minHeight: 70, padding: 10, borderWidth: 2, borderColor: '#334155', borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: '#10283b' },
 });
