@@ -43,6 +43,7 @@ export default function TwoPlayerGame() {
   const bottomPaddleXRef = useRef(0);
   const topPaddleYRef = useRef(0);
   const bottomPaddleYRef = useRef(0);
+  const activeTouchesRef = useRef({});
   const previousTopPaddleRef = useRef({ x: 0, y: 0 });
   const previousBottomPaddleRef = useRef({ x: 0, y: 0 });
   const topScoreRef = useRef(0);
@@ -87,6 +88,40 @@ export default function TwoPlayerGame() {
     setBottomPaddleX(nextX);
     setBottomPaddleY(nextY);
   };
+
+  const handleMultiTouch = useCallback((event) => {
+    if (!event.touches) return;
+    activeTouchesRef.current = {};
+    for (let i = 0; i < event.touches.length; i++) {
+      const touch = event.touches[i];
+      const clientRect = event.currentTarget.getBoundingClientRect();
+      const touchX = touch.clientX - clientRect.left;
+      const touchY = touch.clientY - clientRect.top;
+      activeTouchesRef.current[touch.identifier] = { x: touchX, y: touchY };
+      if (touchY < arena.height / 2) {
+        updateTopPaddle(touchX, touchY);
+      } else {
+        updateBottomPaddle(touchX, touchY - arena.height / 2);
+      }
+    }
+  }, [arena.height, arena.width]);
+
+  const handleTouchEnd = useCallback((event) => {
+    if (!event.touches) return;
+    activeTouchesRef.current = {};
+    for (let i = 0; i < event.touches.length; i++) {
+      const touch = event.touches[i];
+      const clientRect = event.currentTarget.getBoundingClientRect();
+      const touchX = touch.clientX - clientRect.left;
+      const touchY = touch.clientY - clientRect.top;
+      activeTouchesRef.current[touch.identifier] = { x: touchX, y: touchY };
+      if (touchY < arena.height / 2) {
+        updateTopPaddle(touchX, touchY);
+      } else {
+        updateBottomPaddle(touchX, touchY - arena.height / 2);
+      }
+    }
+  }, [arena.height, arena.width]);
 
   const resetBall = (directionY, delayMs = 0) => {
     const centerX = (arena.width - BALL_SIZE) / 2;
@@ -369,19 +404,10 @@ export default function TwoPlayerGame() {
       <View style={[styles.paddle, styles.player1Paddle, { top: bottomPaddleY, left: bottomPaddleX, backgroundColor: paddleColor, shadowColor: paddleColor }]} />
 
       <View
-        style={styles.topTouchZone}
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
-        onResponderGrant={(event) => updateTopPaddle(event.nativeEvent.locationX, event.nativeEvent.locationY)}
-        onResponderMove={(event) => updateTopPaddle(event.nativeEvent.locationX, event.nativeEvent.locationY)}
-      />
-
-      <View
-        style={styles.bottomTouchZone}
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
-        onResponderGrant={(event) => updateBottomPaddle(event.nativeEvent.locationX, event.nativeEvent.locationY)}
-        onResponderMove={(event) => updateBottomPaddle(event.nativeEvent.locationX, event.nativeEvent.locationY)}
+        style={styles.touchZoneContainer}
+        onTouchMove={handleMultiTouch}
+        onTouchStart={handleMultiTouch}
+        onTouchEnd={handleTouchEnd}
       />
 
       {matchWinner ? (
@@ -569,6 +595,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '50%',
+    backgroundColor: 'transparent',
+  },
+  touchZoneContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'transparent',
   },
   overlay: {
