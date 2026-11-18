@@ -8,8 +8,8 @@ Expo slug and package name retain the original `demo-app` identifier.
 
 [**Play Pong Duel in your browser**](https://peterthelander.github.io/pong-duel/)
 
-Open the link in Safari or Chrome, tap **Play**, and drag in the lower part
-of the screen. No Expo Go, Tailscale, shared Wi-Fi, or running computer is needed.
+Open the link in Safari or Chrome, choose **Vs AI** or **2-Player**, and tap
+**Play**. No Expo Go, Tailscale, shared Wi-Fi, or running computer is needed.
 The hosted game is public: anyone can play without signing in to ChatGPT.
 Use your phone's browser if GitHub's in-app browser has trouble opening it.
 
@@ -18,7 +18,9 @@ Use your phone's browser if GitHub's in-app browser has trouble opening it.
 - Drag or tap in the lower half of the screen to move your paddle horizontally
   and vertically. Move the paddle upward as it hits the ball to give the return
   extra speed, up to the game's speed limit.
-- Play against an AI-controlled upper paddle.
+- Choose **Vs AI** to play against an AI-controlled upper paddle, or
+  **2-Player** for two people to play on the same phone. In two-player mode,
+  each person uses one finger on their half of the screen to move their paddle.
 - The first player to score seven points wins. Tap the result screen to restart.
 - Wall hits, paddle hits, and goals have bundled sound effects.
 - Use the arrows on the home screen to choose an illustrated AI opponent.
@@ -110,7 +112,9 @@ native builds use Expo Audio.
 ## Project layout
 
 - `src/app/`: Expo Router screens and layout.
-- `App.js`: game loop, touch controls, scoring, and game presentation.
+- `App.js` and `TwoPlayerGame.js`: shared game presentation and mode entry points.
+- `GameCore.js`, `gamePhysics.js`, `AIController.js`, and `TwoPlayerController.js`:
+  shared game loop, physics, AI behavior, and touch controls.
 - `gameSettings.js`, `gamePreferences.js`, `gameOptions.js`, and `menuStyles.js`: saved preferences and menu presentation.
 - `OpponentAvatar.js`: illustrated opponent portraits.
 - `useGameSounds.web.js`, `useGameSounds.native.js`, and `webAudio.js`: sound playback.

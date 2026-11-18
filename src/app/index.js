@@ -65,28 +65,28 @@ export default function HomeScreen() {
         <View style={styles.gameModeButtons}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Play vs AI"
-            disabled={loading}
-            style={[styles.gameModeButton, gameMode === 'vs-ai' && styles.gameModeButtonActive, loading && styles.disabled]}
+            accessibilityLabel="Select vs AI"
+            accessibilityState={{ selected: gameMode === 'vs-ai' }}
+            style={[styles.gameModeButton, gameMode === 'vs-ai' && styles.gameModeButtonActive]}
             onPress={() => {
               if (soundEnabled) {
                 playSound('paddle', soundStyle);
               }
-              startGame('vs-ai');
+              updatePreference('gameMode', 'vs-ai');
             }}
           >
             <Text style={[styles.gameModeButtonText, gameMode === 'vs-ai' && styles.gameModeButtonTextActive]}>Vs AI</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Play two player"
-            disabled={loading}
-            style={[styles.gameModeButton, gameMode === 'two-player' && styles.gameModeButtonActive, loading && styles.disabled]}
+            accessibilityLabel="Select two player"
+            accessibilityState={{ selected: gameMode === 'two-player' }}
+            style={[styles.gameModeButton, gameMode === 'two-player' && styles.gameModeButtonActive]}
             onPress={() => {
               if (soundEnabled) {
                 playSound('paddle', soundStyle);
               }
-              startGame('two-player');
+              updatePreference('gameMode', 'two-player');
             }}
           >
             <Text style={[styles.gameModeButtonText, gameMode === 'two-player' && styles.gameModeButtonTextActive]}>2-Player</Text>

@@ -1,68 +1,37 @@
-import { GAME_CONSTANTS } from './GameCore';
+export function createTouchController(twoPlayer) {
+  const owners = new Map();
+  const occupied = { top: null, bottom: null };
 
-const { PADDLE_WIDTH } = GAME_CONSTANTS;
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-export class TwoPlayerController {
-  constructor(ballSize, arena) {
-    this.ballSize = ballSize;
-    this.arena = arena;
-    this.activeTouches = {};
-    this.topPaddleXRef = { current: 0 };
-    this.bottomPaddleXRef = { current: 0 };
-  }
-
-  updatePaddles(topPaddleXRef, bottomPaddleXRef, ball, now, dt, elapsedSeconds) {
-    // Paddles are updated via touch handlers, positions already in refs
-  }
-
-  handleMultiTouch(event, topPaddleXRef, bottomPaddleXRef, arenaDimensions) {
-    if (!event.touches) return;
-    this.activeTouches = {};
-    for (let i = 0; i < event.touches.length; i++) {
-      const touch = event.touches[i];
-      const clientRect = event.currentTarget.getBoundingClientRect();
-      const touchX = touch.clientX - clientRect.left;
-      const touchY = touch.clientY - clientRect.top;
-      this.activeTouches[touch.identifier] = { x: touchX, y: touchY };
-
-      if (touchY < arenaDimensions.height / 2) {
-        this.updateTopPaddle(touchX, topPaddleXRef, arenaDimensions);
-      } else {
-        this.updateBottomPaddle(touchX, bottomPaddleXRef, arenaDimensions);
+  return {
+    start(touches, arena, move) {
+      for (const touch of touches) {
+        if (owners.has(touch.identifier)) continue;
+        const side = touch.locationY < arena.height / 2 ? 'top' : 'bottom';
+        if ((!twoPlayer && side === 'top') || occupied[side] !== null) continue;
+        owners.set(touch.identifier, side);
+        occupied[side] = touch.identifier;
+        move(side, touch.locationX, touch.locationY);
       }
-    }
-  }
-
-  handleTouchEnd(event, topPaddleXRef, bottomPaddleXRef, arenaDimensions) {
-    if (!event.touches) return;
-    this.activeTouches = {};
-    for (let i = 0; i < event.touches.length; i++) {
-      const touch = event.touches[i];
-      const clientRect = event.currentTarget.getBoundingClientRect();
-      const touchX = touch.clientX - clientRect.left;
-      const touchY = touch.clientY - clientRect.top;
-      this.activeTouches[touch.identifier] = { x: touchX, y: touchY };
-
-      if (touchY < arenaDimensions.height / 2) {
-        this.updateTopPaddle(touchX, topPaddleXRef, arenaDimensions);
-      } else {
-        this.updateBottomPaddle(touchX, bottomPaddleXRef, arenaDimensions);
+    },
+    move(touches, move) {
+      for (const touch of touches) {
+        const side = owners.get(touch.identifier);
+        if (side) move(side, touch.locationX, touch.locationY);
       }
-    }
-  }
-
-  updateTopPaddle(touchX, topPaddleXRef, arenaDimensions) {
-    const nextX = clamp(touchX - PADDLE_WIDTH / 2, 0, arenaDimensions.width - PADDLE_WIDTH);
-    topPaddleXRef.current = nextX;
-  }
-
-  updateBottomPaddle(touchX, bottomPaddleXRef, arenaDimensions) {
-    const nextX = clamp(touchX - PADDLE_WIDTH / 2, 0, arenaDimensions.width - PADDLE_WIDTH);
-    bottomPaddleXRef.current = nextX;
-  }
+    },
+    end(touches) {
+      for (const touch of touches) {
+        const side = owners.get(touch.identifier);
+        if (side) {
+          occupied[side] = null;
+          owners.delete(touch.identifier);
+        }
+      }
+    },
+    clear() {
+      owners.clear();
+      occupied.top = null;
+      occupied.bottom = null;
+    },
+  };
 }
-

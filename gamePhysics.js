@@ -28,6 +28,27 @@ export function paddleCrossing(previousX, previousY, ballX, ballY, ballSize, pre
 }
 
 /**
+ * Detect an upward-moving ball crossing the underside of a top paddle.
+ * @param {number} previousX
+ * @param {number} previousY
+ * @param {number} ballX
+ * @param {number} ballY
+ * @param {number} ballSize
+ * @param {{x: number, y: number}} previousPaddle
+ * @param {{x: number, y: number}} paddle
+ * @param {number} paddleWidth
+ * @param {number} paddleHeight
+ * @returns {{ballX: number, paddleX: number} | null}
+ */
+export function topPaddleCrossing(previousX, previousY, ballX, ballY, ballSize, previousPaddle, paddle, paddleWidth, paddleHeight) {
+  return paddleCrossing(
+    previousX, -previousY - ballSize, ballX, -ballY - ballSize, ballSize,
+    { x: previousPaddle.x, y: -previousPaddle.y - paddleHeight },
+    { x: paddle.x, y: -paddle.y - paddleHeight }, paddleWidth
+  );
+}
+
+/**
  * @param {number} ballVelocityY
  * @param {number} previousPaddleY
  * @param {number} paddleY

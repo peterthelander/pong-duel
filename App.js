@@ -1,28 +1,25 @@
 import { router } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGameSettings } from './gameSettings';
 import { BACKGROUNDS, OPPONENTS, pointsForOpponent } from './gameOptions';
 import { useGameCore, GAME_CONSTANTS } from './GameCore';
-import { AIController } from './AIController';
+import { createTouchController } from './TwoPlayerController';
 import BallDesign from './BallDesign';
 import OpponentAvatar from './OpponentAvatar';
 import BackgroundDecorations from './BackgroundDecorations';
 
-const { PADDLE_HEIGHT, PADDLE_MARGIN, WIN_SCORE } = GAME_CONSTANTS;
-const PADDLE_WIDTH = 96;
+const { PADDLE_WIDTH, PADDLE_HEIGHT, WIN_SCORE } = GAME_CONSTANTS;
 
-export default function App() {
+export default function App({ twoPlayer = false }) {
   const { audioStatus, soundEnabled, soundStyle, paddleColor, ballColor, ballSize: BALL_SIZE, ballPattern, opponent, background, backgroundDecorations, playerName, playerAvatar, playerLevel, awardWin, setEnteredGame, playSound: playAudio } = useGameSettings();
   const opponentData = OPPONENTS.find((item) => item.name === opponent);
   const theme = BACKGROUNDS.find((item) => item.name === background);
   const insets = useSafeAreaInsets();
 
   const [arena, setArena] = useState({ width: 0, height: 0 });
-  const winAwardedRef = useRef(false);
-  const bottomPaddleYRef = useRef(0);
-  const controllerRef = useRef(null);
+  const [touchController] = useState(() => createTouchController(twoPlayer));
 
   const playSound = useCallback((sound) => {
     if (soundEnabled) {
@@ -30,37 +27,20 @@ export default function App() {
     }
   }, [soundEnabled, soundStyle, playAudio]);
 
-  if (!controllerRef.current && arena.width > 0) {
-    controllerRef.current = new AIController(opponentData, playerLevel, BALL_SIZE, arena);
-  }
-
-  const updateBottomPaddle = (touchX, touchY) => {
-    if (arena.width <= 0 || arena.height <= 0) {
-      return;
-    }
-    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-    const nextX = clamp(touchX - PADDLE_WIDTH / 2, 0, arena.width - PADDLE_WIDTH);
-    const nextY = clamp(arena.height / 2 + touchY - PADDLE_HEIGHT / 2, arena.height / 2, arena.height - PADDLE_HEIGHT);
-    bottomPaddleYRef.current = nextY;
-  };
-
-  const handleScoreChange = useCallback(() => {
-    // Handle any UI updates needed when score changes
-  }, []);
-
-  const handleWin = useCallback(() => {
-    if (!winAwardedRef.current) {
-      winAwardedRef.current = true;
+  const handleWin = useCallback((side) => {
+    if (!twoPlayer && side === 'bottom') {
       awardWin(opponentData.name);
     }
-  }, [opponentData, awardWin]);
+  }, [twoPlayer, opponentData.name, awardWin]);
 
-  const { ballPosition, topPaddleX, bottomPaddleX, topScore, bottomScore, matchWinner, trail, restartMatch } = useGameCore(
+  const { ballPosition, positions, score, winner, trail, restartMatch, movePaddle } = useGameCore(
     arena,
-    controllerRef.current,
     {
+      ballSize: BALL_SIZE,
+      twoPlayer,
+      opponentLevel: opponentData.level,
+      playerLevel,
       onPlaySound: playSound,
-      onScoreChange: handleScoreChange,
       onWin: handleWin,
     }
   );
@@ -83,14 +63,14 @@ export default function App() {
 
       <View style={styles.scoreboard} pointerEvents="none">
         <View style={styles.scoreEntry}>
-          <OpponentAvatar opponent={opponentData} size={32} />
-          <Text numberOfLines={1} style={styles.scoreName}>{opponentData.name}</Text>
-          <Text numberOfLines={1} style={styles.scoreLabel}>: {topScore}</Text>
+          {!twoPlayer ? <OpponentAvatar opponent={opponentData} size={32} /> : null}
+          <Text numberOfLines={1} style={styles.scoreName}>{twoPlayer ? 'Player 2' : opponentData.name}</Text>
+          <Text numberOfLines={1} style={styles.scoreLabel}>: {score.top}</Text>
         </View>
         <View style={styles.scoreEntry}>
-          <OpponentAvatar opponent={playerAvatar} size={32} />
-          <Text numberOfLines={1} style={styles.scoreName}>{playerName || 'You'}</Text>
-          <Text numberOfLines={1} style={styles.scoreLabel}>: {bottomScore}</Text>
+          {!twoPlayer ? <OpponentAvatar opponent={playerAvatar} size={32} /> : null}
+          <Text numberOfLines={1} style={styles.scoreName}>{twoPlayer ? 'Player 1' : playerName || 'You'}</Text>
+          <Text numberOfLines={1} style={styles.scoreLabel}>: {score.bottom}</Text>
         </View>
       </View>
       <Text style={styles.goalLabel}>First to {WIN_SCORE}</Text>
@@ -138,21 +118,24 @@ export default function App() {
         <BallDesign size={BALL_SIZE} color={ballColor} pattern={ballPattern} />
       </Animated.View>
 
-      <View style={[styles.paddle, styles.aiPaddle, { top: PADDLE_MARGIN, left: topPaddleX }]} />
-      <View style={[styles.paddle, styles.playerPaddle, { top: bottomPaddleYRef.current, left: bottomPaddleX, backgroundColor: paddleColor, shadowColor: paddleColor }]} />
+      <View style={[styles.paddle, styles.aiPaddle, { top: positions.top.y, left: positions.top.x }]} />
+      <View style={[styles.paddle, styles.playerPaddle, { top: positions.bottom.y, left: positions.bottom.x, backgroundColor: paddleColor, shadowColor: paddleColor }]} />
 
       <View
-        style={styles.bottomTouchZone}
+        accessibilityLabel="Game arena"
+        style={styles.touchZone}
         onStartShouldSetResponder={() => true}
         onMoveShouldSetResponder={() => true}
-        onResponderGrant={(event) => updateBottomPaddle(event.nativeEvent.locationX, event.nativeEvent.locationY)}
-        onResponderMove={(event) => updateBottomPaddle(event.nativeEvent.locationX, event.nativeEvent.locationY)}
+        onResponderStart={(event) => touchController.start(event.nativeEvent.changedTouches, arena, movePaddle)}
+        onResponderMove={(event) => touchController.move(event.nativeEvent.changedTouches, movePaddle)}
+        onResponderEnd={(event) => touchController.end(event.nativeEvent.changedTouches)}
+        onResponderTerminate={() => touchController.clear()}
       />
 
-      {matchWinner ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="Play again" style={styles.overlay} onPress={restartMatch}>
-          <Text style={styles.overlayTitle}>{matchWinner === 'You' ? 'You Win' : `${matchWinner} Wins`}</Text>
-          {matchWinner === 'You' ? <Text style={styles.overlaySub}>+{pointsForOpponent(opponentData.level)} progress {pointsForOpponent(opponentData.level) === 1 ? 'point' : 'points'}</Text> : null}
+      {winner ? (
+        <Pressable accessibilityRole="button" accessibilityLabel="Play again" style={styles.overlay} onPress={() => { touchController.clear(); restartMatch(); }}>
+          <Text style={styles.overlayTitle}>{twoPlayer ? `${winner === 'bottom' ? 'Player 1' : 'Player 2'} Wins` : winner === 'bottom' ? 'You Win' : `${opponentData.name} Wins`}</Text>
+          {!twoPlayer && winner === 'bottom' ? <Text style={styles.overlaySub}>+{pointsForOpponent(opponentData.level)} progress {pointsForOpponent(opponentData.level) === 1 ? 'point' : 'points'}</Text> : null}
           <Text style={styles.overlaySub}>Tap to play again</Text>
         </Pressable>
       ) : null}
@@ -321,12 +304,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     elevation: 4,
   },
-  bottomTouchZone: {
+  touchZone: {
     position: 'absolute',
+    top: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    height: '50%',
     backgroundColor: 'transparent',
   },
   overlay: {
