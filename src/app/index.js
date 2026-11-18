@@ -8,12 +8,22 @@ import { useGameSettings } from '../../gameSettings';
 import { menuStyles as styles } from '../../menuStyles';
 
 export default function HomeScreen() {
-  const { soundEnabled, soundStyle, audioStatus, startAudio, playSound, opponent, opponentWins, background, backgroundDecorations, playerName, playerLevel, updatePreference, storageError, setEnteredGame } = useGameSettings();
+  const { soundEnabled, soundStyle, audioStatus, startAudio, playSound, opponent, opponentWins, background, backgroundDecorations, playerName, playerLevel, gameMode, updatePreference, storageError, setEnteredGame } = useGameSettings();
   const insets = useSafeAreaInsets();
   const loading = soundEnabled && audioStatus === 'loading';
   const opponentIndex = OPPONENTS.findIndex((item) => item.name === opponent);
   const selected = OPPONENTS[opponentIndex];
   const theme = BACKGROUNDS.find((item) => item.name === background);
+
+  const startGame = (mode) => {
+    updatePreference('gameMode', mode);
+    if (soundEnabled) {
+      startAudio();
+      playSound('paddle', soundStyle);
+    }
+    setEnteredGame(true);
+    router.replace('/game');
+  };
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.color }]}>
@@ -24,35 +34,71 @@ export default function HomeScreen() {
         <Text style={styles.eyebrow}>READY FOR A RALLY?</Text>
         <Text style={styles.title}>Pong Duel</Text>
         <Text style={styles.subtitle}>{playerName || 'Player'} · Level {playerLevel}</Text>
-        <View style={styles.opponentCard}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Previous opponent" style={styles.arrow} onPress={() => updatePreference('opponent', OPPONENTS[(opponentIndex + OPPONENTS.length - 1) % OPPONENTS.length].name)}>
-            <Text style={styles.arrowText}>‹</Text>
-          </Pressable>
-          <View style={styles.opponentInfo}>
-            <OpponentAvatar opponent={selected} />
-            <Text style={styles.optionTitle}>{selected.name}</Text>
-            <Text style={styles.optionSubtitle}>AI · Level {selected.level}</Text>
-            <Text style={styles.optionSubtitle}>Wins: {opponentWins[selected.name] ?? 0}</Text>
+
+        {gameMode === 'vs-ai' && (
+          <View style={styles.opponentCard}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Previous opponent" style={styles.arrow} onPress={() => updatePreference('opponent', OPPONENTS[(opponentIndex + OPPONENTS.length - 1) % OPPONENTS.length].name)}>
+              <Text style={styles.arrowText}>‹</Text>
+            </Pressable>
+            <View style={styles.opponentInfo}>
+              <OpponentAvatar opponent={selected} />
+              <Text style={styles.optionTitle}>{selected.name}</Text>
+              <Text style={styles.optionSubtitle}>AI · Level {selected.level}</Text>
+              <Text style={styles.optionSubtitle}>Wins: {opponentWins[selected.name] ?? 0}</Text>
+            </View>
+            <Pressable accessibilityRole="button" accessibilityLabel="Next opponent" style={styles.arrow} onPress={() => updatePreference('opponent', OPPONENTS[(opponentIndex + 1) % OPPONENTS.length].name)}>
+              <Text style={styles.arrowText}>›</Text>
+            </Pressable>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Next opponent" style={styles.arrow} onPress={() => updatePreference('opponent', OPPONENTS[(opponentIndex + 1) % OPPONENTS.length].name)}>
-            <Text style={styles.arrowText}>›</Text>
-          </Pressable>
-        </View>
+        )}
+
+        {gameMode === 'two-player' && (
+          <View style={styles.gameModeInfo}>
+            <Text style={styles.gameModeTitle}>Two-Player Game</Text>
+            <Text style={styles.gameModeSubtitle}>One player at each end of the device</Text>
+          </View>
+        )}
+
         {soundEnabled && audioStatus === 'failed' ? <Text style={styles.warning}>Sound unavailable</Text> : null}
         {storageError ? <Text style={styles.warning}>{storageError}</Text> : null}
+
+        <View style={styles.gameModeButtons}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Play vs AI"
+            disabled={loading}
+            style={[styles.gameModeButton, gameMode === 'vs-ai' && styles.gameModeButtonActive, loading && styles.disabled]}
+            onPress={() => {
+              if (soundEnabled) {
+                playSound('paddle', soundStyle);
+              }
+              startGame('vs-ai');
+            }}
+          >
+            <Text style={[styles.gameModeButtonText, gameMode === 'vs-ai' && styles.gameModeButtonTextActive]}>Vs AI</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Play two player"
+            disabled={loading}
+            style={[styles.gameModeButton, gameMode === 'two-player' && styles.gameModeButtonActive, loading && styles.disabled]}
+            onPress={() => {
+              if (soundEnabled) {
+                playSound('paddle', soundStyle);
+              }
+              startGame('two-player');
+            }}
+          >
+            <Text style={[styles.gameModeButtonText, gameMode === 'two-player' && styles.gameModeButtonTextActive]}>2-Player</Text>
+          </Pressable>
+        </View>
+
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Play Pong Duel"
           disabled={loading}
           style={[styles.playButton, loading && styles.disabled]}
-          onPress={() => {
-            if (soundEnabled) {
-              startAudio();
-              playSound('paddle', soundStyle);
-            }
-            setEnteredGame(true);
-            router.replace('/game');
-          }}
+          onPress={() => startGame(gameMode)}
         >
           <Text style={styles.playButtonText}>{loading ? 'Loading sounds...' : 'Play'}</Text>
         </Pressable>

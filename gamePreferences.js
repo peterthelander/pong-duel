@@ -11,6 +11,7 @@ export const defaults = {
   ballPattern: BALL_PATTERNS[0],
   opponent: 'Nell',
   background: 'Night',
+  gameMode: 'vs-ai',
   backgroundDecorations: [
     { shape: 'none', color: PADDLE_COLORS[1].color, position: 'Top left' },
     { shape: 'none', color: PADDLE_COLORS[6].color, position: 'Bottom right' },
@@ -54,6 +55,7 @@ export function validatePreferences(value) {
       ...(!('playerAvatar' in value) && { playerAvatar: defaults.playerAvatar }),
       ...(!('opponentWins' in value) && { opponentWins: defaults.opponentWins }),
       ...(!('backgroundDecorations' in value) && { backgroundDecorations: defaults.backgroundDecorations }),
+      ...(!('gameMode' in value) && { gameMode: defaults.gameMode }),
       ...value,
     };
     if (value.playerAvatar && typeof value.playerAvatar === 'object' && !Array.isArray(value.playerAvatar)) {
@@ -86,6 +88,7 @@ export function validatePreferences(value) {
       !BALL_PATTERNS.includes(value.ballPattern) ||
       !OPPONENTS.some((item) => item.name === value.opponent) ||
       !BACKGROUNDS.some((item) => item.name === value.background) ||
+      !(value.gameMode === 'vs-ai' || value.gameMode === 'two-player') ||
       !Array.isArray(value.backgroundDecorations) || value.backgroundDecorations.length !== defaults.backgroundDecorations.length ||
       !value.backgroundDecorations.every((item) => item && typeof item === 'object' &&
         BACKGROUND_SHAPES.some((shape) => shape.value === item.shape) &&
