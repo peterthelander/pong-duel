@@ -70,11 +70,8 @@ export default function TwoPlayerGame() {
       return;
     }
     const nextX = clamp(touchX - PADDLE_WIDTH / 2, 0, arena.width - PADDLE_WIDTH);
-    const nextY = clamp(touchY - PADDLE_HEIGHT / 2, PADDLE_HEIGHT, arena.height / 2);
     topPaddleXRef.current = nextX;
-    topPaddleYRef.current = nextY;
     setTopPaddleX(nextX);
-    setTopPaddleY(nextY);
   };
 
   const updateBottomPaddle = (touchX, touchY) => {
@@ -82,11 +79,8 @@ export default function TwoPlayerGame() {
       return;
     }
     const nextX = clamp(touchX - PADDLE_WIDTH / 2, 0, arena.width - PADDLE_WIDTH);
-    const nextY = clamp(arena.height / 2 + touchY - PADDLE_HEIGHT / 2, arena.height / 2, arena.height - PADDLE_HEIGHT);
     bottomPaddleXRef.current = nextX;
-    bottomPaddleYRef.current = nextY;
     setBottomPaddleX(nextX);
-    setBottomPaddleY(nextY);
   };
 
   const handleMultiTouch = useCallback((event) => {
@@ -98,10 +92,11 @@ export default function TwoPlayerGame() {
       const touchX = touch.clientX - clientRect.left;
       const touchY = touch.clientY - clientRect.top;
       activeTouchesRef.current[touch.identifier] = { x: touchX, y: touchY };
+      
       if (touchY < arena.height / 2) {
-        updateTopPaddle(touchX, touchY);
+        updateTopPaddle(touchX, 0);
       } else {
-        updateBottomPaddle(touchX, touchY - arena.height / 2);
+        updateBottomPaddle(touchX, 0);
       }
     }
   }, [arena.height, arena.width]);
@@ -115,10 +110,11 @@ export default function TwoPlayerGame() {
       const touchX = touch.clientX - clientRect.left;
       const touchY = touch.clientY - clientRect.top;
       activeTouchesRef.current[touch.identifier] = { x: touchX, y: touchY };
+      
       if (touchY < arena.height / 2) {
-        updateTopPaddle(touchX, touchY);
+        updateTopPaddle(touchX, 0);
       } else {
-        updateBottomPaddle(touchX, touchY - arena.height / 2);
+        updateBottomPaddle(touchX, 0);
       }
     }
   }, [arena.height, arena.width]);
