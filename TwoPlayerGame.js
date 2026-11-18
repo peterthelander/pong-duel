@@ -1,329 +1,64 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGameSettings } from './gameSettings';
 import { BACKGROUNDS } from './gameOptions';
-import { paddleCrossing, playerBounceVelocity, serveBallY } from './gamePhysics';
+import { useGameCore, GAME_CONSTANTS } from './GameCore';
+import { TwoPlayerController } from './TwoPlayerController';
 import BallDesign from './BallDesign';
 import BackgroundDecorations from './BackgroundDecorations';
 
+const { PADDLE_HEIGHT, PADDLE_MARGIN, WIN_SCORE } = GAME_CONSTANTS;
 const PADDLE_WIDTH = 96;
-const PADDLE_HEIGHT = 14;
-const PADDLE_MARGIN = 126;
-const BASE_BALL_SPEED = 360;
-const MAX_BALL_SPEED = 850;
-const WIN_SCORE = 7;
-const SERVE_DELAY_MS = 480;
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function randomServeDirection() {
-  return Math.random() > 0.5 ? 1 : -1;
-}
 
 export default function TwoPlayerGame() {
-  const ballPosition = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
-  const animationRef = useRef(null);
-  const lastFrameTimeRef = useRef(0);
-  const rallyPausedUntilRef = useRef(0);
-  const servePendingRef = useRef(false);
   const { audioStatus, soundEnabled, soundStyle, paddleColor, ballColor, ballSize: BALL_SIZE, ballPattern, background, backgroundDecorations, playerName, playerLevel, setEnteredGame, playSound: playAudio } = useGameSettings();
   const theme = BACKGROUNDS.find((item) => item.name === background);
   const insets = useSafeAreaInsets();
+
+  const [arena, setArena] = useState({ width: 0, height: 0 });
+  const controllerRef = useRef(null);
+
   const playSound = useCallback((sound) => {
     if (soundEnabled) {
       playAudio(sound, soundStyle);
     }
   }, [soundEnabled, soundStyle, playAudio]);
 
-  const topPaddleXRef = useRef(0);
-  const bottomPaddleXRef = useRef(0);
-  const topPaddleYRef = useRef(0);
-  const bottomPaddleYRef = useRef(0);
-  const activeTouchesRef = useRef({});
-  const previousTopPaddleRef = useRef({ x: 0, y: 0 });
-  const previousBottomPaddleRef = useRef({ x: 0, y: 0 });
-  const topScoreRef = useRef(0);
-  const bottomScoreRef = useRef(0);
-  const trailRef = useRef(
-    Array.from({ length: 4 }, () => ({
-      x: 0,
-      y: 0,
-    }))
-  );
-  const ballRef = useRef({ x: 0, y: 0, vx: 0, vy: 0 });
-
-  const [arena, setArena] = useState({ width: 0, height: 0 });
-  const [topPaddleX, setTopPaddleX] = useState(0);
-  const [topPaddleY, setTopPaddleY] = useState(0);
-  const [bottomPaddleX, setBottomPaddleX] = useState(0);
-  const [bottomPaddleY, setBottomPaddleY] = useState(0);
-  const [topScore, setTopScore] = useState(0);
-  const [bottomScore, setBottomScore] = useState(0);
-  const [matchWinner, setMatchWinner] = useState(null);
-
-  const updateTopPaddle = (touchX, touchY) => {
-    if (arena.width <= 0 || arena.height <= 0) {
-      return;
-    }
-    const nextX = clamp(touchX - PADDLE_WIDTH / 2, 0, arena.width - PADDLE_WIDTH);
-    topPaddleXRef.current = nextX;
-    setTopPaddleX(nextX);
-  };
-
-  const updateBottomPaddle = (touchX, touchY) => {
-    if (arena.width <= 0 || arena.height <= 0) {
-      return;
-    }
-    const nextX = clamp(touchX - PADDLE_WIDTH / 2, 0, arena.width - PADDLE_WIDTH);
-    bottomPaddleXRef.current = nextX;
-    setBottomPaddleX(nextX);
-  };
+  if (!controllerRef.current && arena.width > 0) {
+    controllerRef.current = new TwoPlayerController(BALL_SIZE, arena);
+  }
 
   const handleMultiTouch = useCallback((event) => {
-    if (!event.touches) return;
-    activeTouchesRef.current = {};
-    for (let i = 0; i < event.touches.length; i++) {
-      const touch = event.touches[i];
-      const clientRect = event.currentTarget.getBoundingClientRect();
-      const touchX = touch.clientX - clientRect.left;
-      const touchY = touch.clientY - clientRect.top;
-      activeTouchesRef.current[touch.identifier] = { x: touchX, y: touchY };
-      
-      if (touchY < arena.height / 2) {
-        updateTopPaddle(touchX, 0);
-      } else {
-        updateBottomPaddle(touchX, 0);
-      }
+    if (controllerRef.current) {
+      controllerRef.current.handleMultiTouch(event, controllerRef.current.topPaddleXRef, controllerRef.current.bottomPaddleXRef, arena);
     }
-  }, [arena.height, arena.width]);
+  }, [arena]);
 
   const handleTouchEnd = useCallback((event) => {
-    if (!event.touches) return;
-    activeTouchesRef.current = {};
-    for (let i = 0; i < event.touches.length; i++) {
-      const touch = event.touches[i];
-      const clientRect = event.currentTarget.getBoundingClientRect();
-      const touchX = touch.clientX - clientRect.left;
-      const touchY = touch.clientY - clientRect.top;
-      activeTouchesRef.current[touch.identifier] = { x: touchX, y: touchY };
-      
-      if (touchY < arena.height / 2) {
-        updateTopPaddle(touchX, 0);
-      } else {
-        updateBottomPaddle(touchX, 0);
-      }
+    if (controllerRef.current) {
+      controllerRef.current.handleTouchEnd(event, controllerRef.current.topPaddleXRef, controllerRef.current.bottomPaddleXRef, arena);
     }
-  }, [arena.height, arena.width]);
+  }, [arena]);
 
-  const resetBall = (directionY, delayMs = 0) => {
-    const centerX = (arena.width - BALL_SIZE) / 2;
-    const centerY = (arena.height - BALL_SIZE) / 2;
-    const initialVX = (Math.random() * 2 - 1) * 170;
-    const initialVY = BASE_BALL_SPEED * directionY;
+  const handleScoreChange = useCallback(() => {
+    // Handle any UI updates needed when score changes
+  }, []);
 
-    ballRef.current = { x: centerX, y: centerY, vx: initialVX, vy: initialVY };
-    trailRef.current = trailRef.current.map(() => ({ x: centerX, y: centerY }));
-    rallyPausedUntilRef.current = performance.now() + delayMs;
-    servePendingRef.current = true;
-    ballPosition.setValue({ x: centerX, y: centerY });
-  };
+  const handleWin = useCallback(() => {
+    // Simple win condition for two-player
+  }, []);
 
-  const restartMatch = () => {
-    topScoreRef.current = 0;
-    bottomScoreRef.current = 0;
-    setTopScore(0);
-    setBottomScore(0);
-    setMatchWinner(null);
-    lastFrameTimeRef.current = 0;
-    resetBall(randomServeDirection(), SERVE_DELAY_MS);
-  };
-
-  useEffect(() => {
-    if (arena.width <= 0 || arena.height <= 0) {
-      return;
+  const { ballPosition, topPaddleX, bottomPaddleX, topScore, bottomScore, matchWinner, trail, restartMatch } = useGameCore(
+    arena,
+    controllerRef.current,
+    {
+      onPlaySound: playSound,
+      onScoreChange: handleScoreChange,
+      onWin: handleWin,
     }
-
-    const initialTop = (arena.width - PADDLE_WIDTH) / 2;
-    const initialBottom = (arena.width - PADDLE_WIDTH) / 2;
-    const topY = PADDLE_MARGIN;
-    const bottomY = clamp(arena.height - PADDLE_MARGIN - PADDLE_HEIGHT, arena.height / 2, arena.height - PADDLE_HEIGHT);
-
-    topPaddleXRef.current = initialTop;
-    topPaddleYRef.current = topY;
-    bottomPaddleXRef.current = initialBottom;
-    bottomPaddleYRef.current = bottomY;
-    previousTopPaddleRef.current = { x: initialTop, y: topY };
-    previousBottomPaddleRef.current = { x: initialBottom, y: bottomY };
-    setTopPaddleX(initialTop);
-    setTopPaddleY(topY);
-    setBottomPaddleX(initialBottom);
-    setBottomPaddleY(bottomY);
-    resetBall(randomServeDirection(), SERVE_DELAY_MS);
-  }, [arena.height, arena.width, BALL_SIZE]);
-
-  useEffect(() => {
-    topScoreRef.current = topScore;
-    bottomScoreRef.current = bottomScore;
-  }, [bottomScore, topScore]);
-
-  useEffect(() => {
-    if (arena.width <= 0 || arena.height <= 0) {
-      return undefined;
-    }
-
-    const topPaddleY = PADDLE_MARGIN;
-
-    const step = (now) => {
-      if (lastFrameTimeRef.current === 0) {
-        lastFrameTimeRef.current = now;
-      }
-
-      const elapsedSeconds = Math.max(0, (now - lastFrameTimeRef.current) / 1000);
-      const dt = Math.min(elapsedSeconds, 0.033);
-      lastFrameTimeRef.current = now;
-
-      const topPaddle = { x: topPaddleXRef.current, y: topPaddleYRef.current };
-      const bottomPaddle = { x: bottomPaddleXRef.current, y: bottomPaddleYRef.current };
-      const previousTopPaddle = previousTopPaddleRef.current;
-      const previousBottomPaddle = previousBottomPaddleRef.current;
-      previousTopPaddleRef.current = topPaddle;
-      previousBottomPaddleRef.current = bottomPaddle;
-
-      if (matchWinner) {
-        animationRef.current = requestAnimationFrame(step);
-        return;
-      }
-
-      const ball = ballRef.current;
-      const previousBallX = ball.x;
-      const previousBallY = ball.y;
-      ball.x += ball.vx * dt;
-      ball.y += ball.vy * dt;
-
-      trailRef.current = [
-        { x: ball.x, y: ball.y },
-        trailRef.current[0],
-        trailRef.current[1],
-        trailRef.current[2],
-      ];
-
-      if (now < rallyPausedUntilRef.current) {
-        animationRef.current = requestAnimationFrame(step);
-        return;
-      }
-
-      if (servePendingRef.current) {
-        servePendingRef.current = false;
-        if (ball.vy > 0) {
-          ball.y = serveBallY(
-            ball.x, ball.y, BALL_SIZE, bottomPaddleXRef.current,
-            bottomPaddleYRef.current, PADDLE_WIDTH, PADDLE_HEIGHT
-          );
-        } else {
-          ball.y = serveBallY(
-            ball.x, ball.y, BALL_SIZE, topPaddleXRef.current,
-            topPaddleYRef.current, PADDLE_WIDTH, PADDLE_HEIGHT
-          );
-        }
-      }
-
-      // Bounce from side walls.
-      if (ball.x <= 0) {
-        ball.x = 0;
-        ball.vx = Math.abs(ball.vx);
-        playSound('wall');
-      } else if (ball.x + BALL_SIZE >= arena.width) {
-        ball.x = arena.width - BALL_SIZE;
-        ball.vx = -Math.abs(ball.vx);
-        playSound('wall');
-      }
-
-      const ballCenterX = ball.x + BALL_SIZE / 2;
-
-      // Top paddle collision (player 2).
-      const topCrossing = paddleCrossing(
-        previousBallX, previousBallY, ball.x, ball.y, BALL_SIZE,
-        previousTopPaddle, topPaddle, PADDLE_WIDTH
-      );
-      if (ball.vy < 0 && topCrossing !== null) {
-        ball.y = topPaddleY + PADDLE_HEIGHT;
-        ball.vy = playerBounceVelocity(ball.vy, previousTopPaddle.y, topPaddle.y, elapsedSeconds);
-        const offset =
-          (topCrossing.ballX + BALL_SIZE / 2 - (topCrossing.paddleX + PADDLE_WIDTH / 2)) / (PADDLE_WIDTH / 2);
-        ball.vx += offset * 270;
-        playSound('paddle');
-      }
-
-      // Bottom paddle collision (player 1).
-      const bottomCrossing = paddleCrossing(
-        previousBallX, previousBallY, ball.x, ball.y, BALL_SIZE,
-        previousBottomPaddle, bottomPaddle, PADDLE_WIDTH
-      );
-      if (ball.vy > 0 && bottomCrossing !== null) {
-        ball.y = bottomPaddleYRef.current - BALL_SIZE;
-        ball.vy = playerBounceVelocity(ball.vy, previousBottomPaddle.y, bottomPaddle.y, elapsedSeconds);
-        const offset =
-          (bottomCrossing.ballX + BALL_SIZE / 2 - (bottomCrossing.paddleX + PADDLE_WIDTH / 2)) / (PADDLE_WIDTH / 2);
-        ball.vx += offset * 270;
-        playSound('paddle');
-      }
-
-      // Clamp speed so gameplay stays controllable.
-      ball.vx = clamp(ball.vx, -MAX_BALL_SPEED, MAX_BALL_SPEED);
-      ball.vy = clamp(ball.vy, -MAX_BALL_SPEED, MAX_BALL_SPEED);
-
-      // Scoring: ball exits top or bottom.
-      if (ball.y + BALL_SIZE < 0) {
-        const nextBottomScore = bottomScoreRef.current + 1;
-        bottomScoreRef.current = nextBottomScore;
-        setBottomScore(nextBottomScore);
-        playSound('point');
-        if (nextBottomScore >= WIN_SCORE) {
-          setMatchWinner('Player 1');
-          resetBall(1);
-          animationRef.current = requestAnimationFrame(step);
-          return;
-        }
-        resetBall(1, SERVE_DELAY_MS);
-        lastFrameTimeRef.current = 0;
-        animationRef.current = requestAnimationFrame(step);
-        return;
-      }
-
-      if (ball.y > arena.height) {
-        const nextTopScore = topScoreRef.current + 1;
-        topScoreRef.current = nextTopScore;
-        setTopScore(nextTopScore);
-        playSound('point');
-        if (nextTopScore >= WIN_SCORE) {
-          setMatchWinner('Player 2');
-          resetBall(-1);
-          animationRef.current = requestAnimationFrame(step);
-          return;
-        }
-        resetBall(-1, SERVE_DELAY_MS);
-        lastFrameTimeRef.current = 0;
-        animationRef.current = requestAnimationFrame(step);
-        return;
-      }
-
-      ballPosition.setValue({ x: ball.x, y: ball.y });
-      animationRef.current = requestAnimationFrame(step);
-    };
-
-    animationRef.current = requestAnimationFrame(step);
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      lastFrameTimeRef.current = 0;
-    };
-  }, [arena.height, arena.width, BALL_SIZE, ballPosition, matchWinner, playSound]);
+  );
 
   const netSegments = Array.from({ length: 12 }, (_, i) => i);
 
@@ -343,12 +78,10 @@ export default function TwoPlayerGame() {
 
       <View style={styles.scoreboard} pointerEvents="none">
         <View style={styles.scoreEntry}>
-          <Text numberOfLines={1} style={styles.scoreName}>Player 2</Text>
-          <Text numberOfLines={1} style={styles.scoreLabel}>: {topScore}</Text>
+          <Text numberOfLines={1} style={styles.scoreLabel}>Player 2: {topScore}</Text>
         </View>
         <View style={styles.scoreEntry}>
-          <Text numberOfLines={1} style={styles.scoreName}>Player 1</Text>
-          <Text numberOfLines={1} style={styles.scoreLabel}>: {bottomScore}</Text>
+          <Text numberOfLines={1} style={styles.scoreLabel}>Player 1: {bottomScore}</Text>
         </View>
       </View>
       <Text style={styles.goalLabel}>First to {WIN_SCORE}</Text>
@@ -362,7 +95,7 @@ export default function TwoPlayerGame() {
         ))}
       </View>
 
-      {trailRef.current.map((ghost, index) => (
+      {trail.map((ghost, index) => (
         <View
           key={index}
           style={[
@@ -396,8 +129,8 @@ export default function TwoPlayerGame() {
         <BallDesign size={BALL_SIZE} color={ballColor} pattern={ballPattern} />
       </Animated.View>
 
-      <View style={[styles.paddle, styles.player2Paddle, { top: topPaddleY, left: topPaddleX }]} />
-      <View style={[styles.paddle, styles.player1Paddle, { top: bottomPaddleY, left: bottomPaddleX, backgroundColor: paddleColor, shadowColor: paddleColor }]} />
+      <View style={[styles.paddle, styles.player2Paddle, { top: PADDLE_MARGIN, left: topPaddleX }]} />
+      <View style={[styles.paddle, styles.player1Paddle, { top: arena.height - PADDLE_MARGIN - PADDLE_HEIGHT, left: bottomPaddleX, backgroundColor: paddleColor, shadowColor: paddleColor }]} />
 
       <View
         style={styles.touchZoneContainer}
@@ -489,13 +222,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     flexShrink: 0,
   },
-  scoreName: {
-    color: '#f8fafc',
-    fontSize: 15,
-    fontWeight: '700',
-    flexShrink: 1,
-    marginLeft: 2,
-  },
   goalLabel: {
     position: 'absolute',
     top: 94,
@@ -576,22 +302,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },
     elevation: 4,
-  },
-  topTouchZone: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-    backgroundColor: 'transparent',
-  },
-  bottomTouchZone: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-    backgroundColor: 'transparent',
   },
   touchZoneContainer: {
     position: 'absolute',
