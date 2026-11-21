@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated } from 'react-native';
 import { updateAiPaddle } from './AIController';
-import { paddleCrossing, playerBounceVelocity, serveBallY, topPaddleCrossing } from './gamePhysics';
+import { paddleCrossing, paddleSlideVelocity, playerBounceVelocity, serveBallY, topPaddleCrossing } from './gamePhysics';
 
 const PADDLE_WIDTH = 96;
 const PADDLE_HEIGHT = 14;
@@ -126,12 +126,12 @@ export function useGameCore(arena, { ballSize, twoPlayer, opponentLevel, playerL
       if (topCrossing) {
         ball.y = current.top.y + PADDLE_HEIGHT;
         ball.vy = -playerBounceVelocity(ball.vy, -previous.top.y, -current.top.y, elapsed);
-        ball.vx += ((topCrossing.ballX + ballSize / 2 - topCrossing.paddleX - PADDLE_WIDTH / 2) / (PADDLE_WIDTH / 2)) * 270;
+        ball.vx += ((topCrossing.ballX + ballSize / 2 - topCrossing.paddleX - PADDLE_WIDTH / 2) / (PADDLE_WIDTH / 2)) * 270 + paddleSlideVelocity(previous.top.x, current.top.x, elapsed);
         onPlaySound('paddle');
       } else if (bottomCrossing) {
         ball.y = current.bottom.y - ballSize;
         ball.vy = playerBounceVelocity(ball.vy, previous.bottom.y, current.bottom.y, elapsed);
-        ball.vx += ((bottomCrossing.ballX + ballSize / 2 - bottomCrossing.paddleX - PADDLE_WIDTH / 2) / (PADDLE_WIDTH / 2)) * 270;
+        ball.vx += ((bottomCrossing.ballX + ballSize / 2 - bottomCrossing.paddleX - PADDLE_WIDTH / 2) / (PADDLE_WIDTH / 2)) * 270 + paddleSlideVelocity(previous.bottom.x, current.bottom.x, elapsed);
         onPlaySound('paddle');
       }
       ball.vx = clamp(ball.vx, -MAX_BALL_SPEED, MAX_BALL_SPEED);

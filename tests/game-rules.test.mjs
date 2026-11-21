@@ -256,15 +256,16 @@ test('a rising paddle catches a descending ball when their paths cross between f
   assert.equal(paddleCrossing(40, 270, 44, 280, 18, { x: 30, y: 300 }, { x: 30, y: 320 }, 96), null);
 });
 
-test('hitting while moving the paddle upward adds a capped, frame-rate-independent speed boost', () => {
+test('paddle swing speeds the ball up and pulling back slows it, independent of frame rate', () => {
   const stationary = playerBounceVelocity(360, 300, 300, 0.02);
-  assert.equal(stationary, -370.8);
-  assert.equal(playerBounceVelocity(360, 300, 310, 0.02), stationary);
+  assert.ok(Math.abs(stationary) < 360);
+  const swing = playerBounceVelocity(360, 300, 290, 0.02);
+  const pullback = playerBounceVelocity(360, 300, 310, 0.02);
+  assert.ok(Math.abs(swing) > 360);
+  assert.ok(Math.abs(pullback) < Math.abs(stationary));
+  assert.equal(swing, playerBounceVelocity(360, 300, 295, 0.01));
   assert.equal(playerBounceVelocity(360, 300, 290, 0), stationary);
-  const moving = playerBounceVelocity(360, 300, 290, 0.02);
-  assert.ok(Math.abs(moving) >= Math.abs(stationary) + 300);
-  assert.equal(moving, playerBounceVelocity(360, 300, 295, 0.01));
-  assert.equal(playerBounceVelocity(360, 300, 200, 0.02), stationary - 350);
+  assert.equal(playerBounceVelocity(100, 300, 400, 0.02), -220);
 });
 
 test('horizontal paddle position is evaluated at the crossing, not the end of the frame', () => {
