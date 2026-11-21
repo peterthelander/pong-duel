@@ -16,12 +16,10 @@ export function useGameSounds(style) {
 
   const playSound = useCallback((sound) => {
     const player = { wall, paddle, point }[sound];
-    try {
-      void player.seekTo(0).catch((error) => console.error('Could not rewind game sound:', error));
-      player.play();
-    } catch (error) {
-      console.error('Could not play game sound:', error);
-    }
+    void player.seekTo(0)
+      .catch((error) => console.error('Could not rewind game sound:', error))
+      .then(() => player.play())
+      .catch((error) => console.error('Could not play game sound:', error));
   }, [wall, paddle, point]);
 
   return { audioStatus: 'ready', startAudio: () => {}, playSound };
