@@ -49,6 +49,8 @@ export function topPaddleCrossing(previousX, previousY, ballX, ballY, ballSize, 
 }
 
 /**
+ * Outgoing vertical speed: the ball keeps most of its speed and gains the paddle's velocity
+ * toward the opponent. Swinging into the ball speeds it up; pulling back cushions and slows it.
  * @param {number} ballVelocityY
  * @param {number} previousPaddleY
  * @param {number} paddleY
@@ -56,9 +58,22 @@ export function topPaddleCrossing(previousX, previousY, ballX, ballY, ballSize, 
  * @returns {number}
  */
 export function playerBounceVelocity(ballVelocityY, previousPaddleY, paddleY, elapsedSeconds) {
-  const upwardSpeed = elapsedSeconds > 0 ? Math.max(0, (previousPaddleY - paddleY) / elapsedSeconds) : 0;
-  const boost = Math.min(350, upwardSpeed * 0.7);
-  return -(Math.abs(ballVelocityY) * 1.03 + boost);
+  const paddleSpeed = elapsedSeconds > 0 ? (previousPaddleY - paddleY) / elapsedSeconds : 0;
+  const swing = Math.max(-300, Math.min(450, paddleSpeed * 0.8));
+  const speed = Math.max(220, Math.abs(ballVelocityY) * 0.92 + swing);
+  return -speed;
+}
+
+/**
+ * Sideways speed added by a paddle that is sliding when it hits the ball.
+ * @param {number} previousPaddleX
+ * @param {number} paddleX
+ * @param {number} elapsedSeconds
+ * @returns {number}
+ */
+export function paddleSlideVelocity(previousPaddleX, paddleX, elapsedSeconds) {
+  const slide = elapsedSeconds > 0 ? (paddleX - previousPaddleX) / elapsedSeconds : 0;
+  return Math.max(-200, Math.min(200, slide * 0.25));
 }
 
 /**
