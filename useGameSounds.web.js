@@ -43,12 +43,9 @@ export function useGameSounds() {
 
   const playSound = useCallback((sound, style) => {
     if (audioRef.current) {
-      try {
-        audioRef.current.play(sound, style);
-      } catch (error) {
+      void audioRef.current.play(sound, style).catch((error) => {
         console.error('Could not play game sound:', error);
-        setAudioStatus('failed');
-      }
+      });
     }
   }, []);
 

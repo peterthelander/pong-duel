@@ -26,11 +26,19 @@ export function createWebAudio() {
     unlock() {
       return context.resume();
     },
-    play(name, style) {
+    async play(name, style) {
+      // iOS Safari leaves the context suspended/interrupted until resumed inside a gesture.
+      if (context.state !== 'running') {
+        await context.resume();
+      }
+      const buffer = buffers[`${style}-${name}`];
+      if (!buffer) {
+        throw new Error(`Missing ${style}-${name} sound`);
+      }
       const source = context.createBufferSource();
-      source.buffer = buffers[`${style}-${name}`];
+      source.buffer = buffer;
       source.connect(context.destination);
-      source.start();
+      source.start(0);
     },
     close() {
       return context.close();
